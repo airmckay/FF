@@ -1,0 +1,395 @@
+---
+title: "Overview of all acoustic files"
+output: html_document
+date: "2023-10-11"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+36 + 33
+```
+
+
+## Problem statement: 
+I am preparing to start manually identifying bat passes from a pool of bat data that was collected from 36 detector locations across 12 sites (3 detector locations per site: open, interior and canopy plots) over 4 months in 2021 and 33 similar detector locations across 11 sites over 4 months in 2022. 
+
+It is not feasible to manually identify all bat passes and so instead I am choosing to focus on a group of bats whose behavior responses to forest structure in relation to seasonal changes. However, I still need to do some subset of manual acoustic analysis on the remaining bat passes. Whatever passes I do not manually identify will still be included in analyses with the understanding that the software is imperfect and that there may be some misidentified passes. 
+
+All bat passes have been filtered by a software designed to automatically designate bat passes to species level, or otherwise to rather or not it is an unknown bat (NoID) or noise. 
+
+For a masters student research, I manually identified SRE passes collected from open plots for data collected in 2021 (~19000 passes)
+Remaining number of SRE passes needed to manually ID: *60914 SRE passes*
+
+*I would like help deciding how to approach subsetting and analyzing the non-target bat acoustic data for manual acoustic analysis* 
+
+
+################################################################################
+## Research aims and hypotheses
+
+It is necessary to identify best practices for monitoring bats in Nordic forests that are adapted to the region-specific conditions of European bats living at the far northern extents of their ranges and operating under constraints unique to hemiboreal and boreal climate zones. The main objectives of this study were to determine which: 
+
+1.) periods in the season and 
+2.) under which weather conditions and 
+3.) what types of habitat is most advantageous to sample the whole bat community throughout the summer. 
+
+More specifically, we were aimed to explore how Western barbastelles, _Myotis_, _Plecotus_ species (short range echolocators, SRE) behaved (commuting, social and feeding activity) in different habitats sampled (interior, open and canopy plots). We hypothesized that the canopy detectors would display higher overall activity for _Myotis_ species when photoperiod was shortest and that this genus would feed more often in open plots when photoperiod was longer. Furthermore, we hypothesized that bat activity overall would decrease with increasing forest density however we have explored which measures of density provided the best signal of predicting bat activity: remote sensing data on forest stand density, field measurements of basal area and number of stems, canopy openness from hemispherical photography, as well as vegetation cover.
+
+
+################################################################################
+## Overview of all the bat acoustic files collected for the Follo Forest project in summers of 2021 and 2022
+# Automatically processed data (not manually vetted) codes represent first three letters of the genus followed by the first three letters of the species. '*' Indciate SRE bat species. 
+
+
+### 2021
+12 sites which each had 3 plots (open, interior and canopy; n = 36 bat detector locations) where an acoustic detector stood throughout the summer collecting bat acoustic data. 
+
+
+
+BARBAR		1706*
+EPTNIL		83047
+EPTSER		3122
+MYOALC		125*
+MYOBEC		163*
+MYOBRA		8540*
+MYODAS		2383*
+MYODAU		12732*
+MYOMYO		65*
+MYOMYS		7036
+MYONAT		261
+NYCLEI		780
+NYCNOC		2782
+NoID		54308
+<!-- Noise		261782 -->
+PIPNAT		1764
+PIPPIP		2390
+PIPPYG		38327
+PLEAUR		1324*
+PLEAUS		1543*
+VESMUR		123
+
+*Total = 35878 bat passes*
+
+### 2022 
+
+BARBAR		631 *
+EPTNIL		44493
+EPTSER		2010
+MYOALC		115  *# All Myotis have already been ID'd at open sites only (19000 passes) 
+MYOBEC		216  *#
+MYOBRA		11655*#
+MYODAS		4239 *#
+MYODAU		13032*#
+MYOMYO		226  *#
+MYOMYS		9678 
+MYONAT		366  
+NYCLEI		844  
+NYCNOC		4880 
+NoID		59554  
+<!-- Noise		299853  -->
+PIPNAT		705  
+PIPPIP		9402 
+PIPPYG		27679
+PLEAUR		4124*
+PLEAUS		385 * 
+VESMUR		181
+
+
+################################################################################
+*Total = 977940 files*
+- minus noise: 
+*Total passes = 416305*
+
+*Total SRE passes = 79914*
+I manually identified SRE passes collected from open plots for data collected in 2021 (~19000 passes)
+Remaining number of SRE passes needed to manually ID: *60914 SRE passes*
+
+## Objective: 
+- Determine which approach to use to  do with manual acoustic analyisis 
+
+
+################################################################################
+## Approaches: 
+
+1. Manually ID all SRE bat passes (Myotis species, Plecotus species, Barbastelles) and then a random selection of 1000 passes from the other AUTOIDs across all sites (also randomly selected): 
+
+_Total number of bat passes to be manually identified:_ 
+
+60914 SRE passes + 7903 bat passes collected in 2021 + 8096 bat passes collected in 2022. 
+Total = 76913 bat passes remaining to manually identify. 
+
+
+2.  Manually ID all SRE bat passes (Myotis species, Plecotus species, Barbastelles) and subset the rest of the data to include at least one file per taxon per site and per night (method found in this study: https://www.nature.com/articles/s41598-021-89660-z) 
+
+_Total number of bat passes to be manually identified:_ 
+
+(CALCULATED BELOW)
+
+
+
+
+```{r}
+library(data.table)
+library(tidyverse)
+library(beepr)
+library(lubridate)
+library(purrr)
+library(janitor)
+#renv::install("rstudio/renv")
+library(renv)
+library(stringr)
+library(kableExtra)
+library(papeR)
+library(skimr)
+library(vtable)
+library(ggdark)
+library(beepr)
+
+## Setup output directory 
+output <- "C:/Users/apmc/OneDrive - Norwegian University of Life Sciences/3. Follo Forest 2021-2023/Manuscripts/Analyses/Outputs"
+
+file.name <- "SummarizingBatAcousticData"
+
+todays_date <- Sys.Date()
+ 
+dir.name <- str_c(output,"/", file.name, "_", todays_date)
+dir.name
+ 
+output_today <- dir.name
+output_today
+
+dir.create(output_today)
+output_today
+# "C:/Users/apmc/OneDrive - Norwegian University of Life Sciences/3. Follo Forest 2021-2023/Manuscripts/Analyses/Outputs/SummarizingBatAcousticData_2023-10-11"
+
+```
+
+
+## Import 2021 and 2022 datasets
+I show my workflow but have made it possible to skip to the point where you import the simplified dataset of all bat passes from both seasons, with noise files removed. 
+```{r}
+################################################################################
+## Import 2021 data
+################################################################################
+
+# 
+# bats21 <-  read_csv("P:/FolloForest2021/FolloForest2021/Processed_Data/BatAcousticData/Extraction/Extraction FF21_AllFiles_troubleshooting_columns_included_SitePlot.csv", col_types = cols(...1 = col_skip()))
+# # 484303 obs of 58 variables 
+# 
+# # remove some redundant columns, identify the main auto id column 
+# b21_df <- bats21 %>% dplyr::select(-c(
+#   INDIR1, INDIR2, INDIR3, INDIR4,
+#   OUTDIR_simple, OUTDIR_simple1, 
+#   OUTDIR_simple2, OUTDIR_simple3, 
+#   OUTDIR_simple4)) %>% dplyr::mutate(autoid = factor(AUTO.ID..))
+# 
+# # Format the location columns and 
+# b21_df <- b21_df %>% mutate(Site = factor(Site), 
+#                             SitePlot = factor(SitePlot), 
+#                             Plot = case_when(
+#                             str_detect(SitePlot, "-OB") ~ "Open",
+#   str_detect(SitePlot, "-CB") ~ "Canopy", 
+#   str_detect(SitePlot, "-IB") ~ "Interior")) %>% mutate(Plot = factor(Plot))  
+# 
+# 
+# 
+# ################################################################################
+# ## Import 2022 data
+# ################################################################################
+# 
+# 
+# bats22 <- read_csv("P:/FolloForest2021/FolloForest2022/Acoustics/Extraction/2022_AutomaticallyProcessed_BatAcousticData_allsitescombined_unedited.csv")
+# # 494268 obs 
+# 
+# # Create a SitePlot column and format the other columns 
+# bats22$INDIR1 <- gsub("\\", "/", bats22$INDIR, fixed = TRUE)
+# head(bats22$INDIR1)
+# # "\\\\largefile.nmbu.no\\Project\\FolloForest2021\\FolloForest2022\\Acoustics\\FF07\\FF07-IB\\DATA\\FF07-IB_05.07.2022"
+# 
+# b22_inventory <- bats22 %>% select(-1) %>% mutate(map = str_remove(INDIR1, "//largefile.nmbu.no/Project/FolloForest2021/FolloForest2022/Acoustics/"))  
+# head(b22_inventory$map)
+# # "FF07/FF07-IB/DATA/FF07-IB_05.07.2022"
+# 
+# # Parse out the different directories - some directories will have two data folders. 
+# cols <- c("Site", "SitePlot", "DATA", "Collection") 
+# b22_inventory1 <- b22_inventory %>% tidyr::separate(col = map, 
+#                                                              sep = "/",
+#                                                              into = cols, 
+#                                                              remove = FALSE)
+# # parse out the file paths to just get the file names
+# # For some directories there were two "Data" folders (Data/Data) so I will need to recreate a complete file list from the two columns... 
+# head(b22_inventory1$SitePlot)
+# summary(b22_inventory1)
+# 
+# b22_df1 <- b22_inventory1 %>% select(-DATA) %>% mutate(Site = factor(Site), 
+#                                                        SitePlot = factor(SitePlot), 
+#                                                        Collection = factor(Collection))
+# 
+# summary(b22_df1)
+# 
+# ## Add a row index column 
+# b22_df1$uid <- 1:nrow(b22_df1)
+# summary(b22_df1$uid )
+# 
+# ## Make one auoto ID column 
+# 
+# adf1 <- b22_df1 %>% select(uid, AUTO.ID) %>% drop_na() 
+# # 1323 observations
+# 
+# adf2 <- b22_df1 %>% select(uid, AUTO.ID.) %>% drop_na()
+# # 494268 obs, no NAs - so I will just use this AUTO ID column and drop the other, along with some other no longer useful columns 
+# 
+# b22_df2 <- b22_df1 %>% dplyr::select(-c(uid, map, AUTO.ID, INDIR1)) %>% dplyr::mutate(autoid = factor(AUTO.ID.))
+# 
+# b22_df2 <- b22_df2 %>% mutate(Plot = case_when(
+#   str_detect(SitePlot, "-OB") ~ "Open",
+#   str_detect(SitePlot, "-CB") ~ "Canopy", 
+#   str_detect(SitePlot, "-IB") ~ "Interior")) %>% mutate(Plot = factor(Plot))
+# 
+# summary(b22_df2$autoid)
+# summary(b22_df2$Site) 
+# summary(b22_df2$SitePlot) 
+# summary(b22_df2$Plot)
+# 
+# 
+# ### Remove noise and merge the datasets
+# 
+# b21 <- b21_df %>% filter(autoid != "Noise") %>% droplevels()
+# names(b21)
+# #  [1] "INDIR"         "OUTDIR"        "FOLDER"        "IN.FILE"       "CHANNEL"       "OFFSET"        "DURATION"      "OUT.FILE.FS"  
+# #  [9] "OUT.FILE.ZC"   "DATE"          "TIME"          "HOUR"          "DATE.12"       "TIME.12"       "HOUR.12"       "AUTO.ID."     
+# # [17] "PULSES"        "MATCHING"      "MATCH.RATIO"   "MARGIN"        "ALTERNATE.1"   "ALTERNATE.2"   "N"             "Fc"           
+# # [25] "Sc"            "Dur"           "Fmax"          "Fmin"          "Fmean"         "TBC"           "Fk"            "Tk"           
+# # [33] "S1"            "Tc"            "Qual"          "FILES"         "MANUAL.ID"     "ORGID"         "USERID"        "REVIEW.ORGID" 
+# # [41] "REVIEW.USERID" "INPATHMD5"     "OUTPATHMD5FS"  "OUTPATHMD5ZC"  "AUTO.ID"       "AUTO.ID.."     "Site"          "SitePlot"     
+# # [49] "Collection"    "autoid"        "Plot" 
+# 
+# b21 <- b21 %>% dplyr::select(c(
+#   INDIR, OUTDIR, OUT.FILE.FS, DATE, TIME, HOUR, DATE.12, TIME.12, HOUR.12, Site, SitePlot, Plot, Collection, autoid))
+# dim(b21)
+# #222521     14
+# b21$year <- "2021"
+# 
+# b22 <- b22_df2 %>% filter(autoid != "Noise") %>% droplevels()
+# names(b22)
+# #  [1] "INDIR"         "OUTDIR"        "FOLDER"        "IN.FILE"       "CHANNEL"       "OFFSET"        "DURATION"      "OUT.FILE.FS"  
+# #  [9] "OUT.FILE.ZC"   "DATE"          "TIME"          "HOUR"          "DATE.12"       "TIME.12"       "HOUR.12"       "PULSES"       
+# # [17] "MATCHING"      "MATCH.RATIO"   "MARGIN"        "ALTERNATE.1"   "ALTERNATE.2"   "N"             "Fc"            "Sc"           
+# # [25] "Dur"           "Fmax"          "Fmin"          "Fmean"         "TBC"           "Fk"            "Tk"            "S1"           
+# # [33] "Tc"            "Qual"          "FILES"         "MANUAL.ID"     "ORGID"         "USERID"        "REVIEW.ORGID"  "REVIEW.USERID"
+# # [41] "INPATHMD5"     "OUTPATHMD5FS"  "OUTPATHMD5ZC"  "AUTO.ID."      "Site"          "SitePlot"      "Collection"    "autoid"       
+# # [49] "Plot"  
+# 
+# b22 <- b22 %>% dplyr::select(c(
+#   INDIR, OUTDIR, OUT.FILE.FS, DATE, TIME, HOUR, DATE.12, TIME.12, HOUR.12, Site, SitePlot, Plot, Collection, autoid))
+# dim(b22) 
+# b22$year <- "2022"
+# #194415     14
+# 
+# FF <- full_join(b21, b22)
+# dim(FF)
+# #416936     15
+# summary(FF)
+
+#write.csv(FF, file = file.path(output_today, "Simple_AllBatData.CSV") )
+# 11.10.2023 
+
+FF <- read_csv("C:/Users/apmc/OneDrive - Norwegian University of Life Sciences/3. Follo Forest 2021-2023/Manuscripts/Analyses/Outputs/SummarizingBatAcousticData_2023-10-11/Simple_AllBatData.CSV", 
+     col_types = cols(...1 = col_skip()))
+dim(FF)
+# [1] 416936     15
+
+## Format columns:
+FF <- FF %>% dplyr:: mutate(Site = factor(Site), 
+                            SitePlot = factor(SitePlot),
+                            Plot = factor(Plot), 
+                            Collection = factor(Collection),
+                            year = factor(year), 
+                            autoid = factor(autoid))
+## Notice in 2022 we used a slightly different numbering system (2022: FF02, 2021: FF2). Will fix this:
+
+FF$SitePlot <- gsub("FF1-", "FF01-", FF$SitePlot)
+FF$SitePlot <- gsub("FF2", "FF02", FF$SitePlot)
+FF$SitePlot <- gsub("FF3", "FF03", FF$SitePlot)
+FF$SitePlot <- gsub("FF4", "FF04", FF$SitePlot)
+FF$SitePlot <- gsub("FF5", "FF05", FF$SitePlot)
+FF$SitePlot <- gsub("FF6", "FF06", FF$SitePlot)
+FF$SitePlot <- gsub("FF7", "FF07", FF$SitePlot)
+FF$SitePlot <- gsub("FF8", "FF08", FF$SitePlot)
+FF$SitePlot <- gsub("FF9", "FF09", FF$SitePlot)
+
+FF$SitePlot <- as.factor(FF$SitePlot)
+
+summary(FF$SitePlot)
+
+## Make a siteplot-year column 
+FF$siteplotyear <- as.factor(paste0(FF$SitePlot, sep = "-", FF$year))
+
+## Quick and easy summary tables 
+kbl(summarize( FF, type = "factor", variables = "siteplotyear", 
+     caption = "2021 and 2022 Follo Forest Bat Data Summary by SitePlot")) %>%  kable_styling()
+
+```
+
+
+
+# Approach 2 - subsetting 
+ Manually ID all SRE bat passes (Myotis species, Plecotus species, Barbastelles) and subset the rest of the data to include at least one file per taxon per site and per night (method found in this study: https://www.nature.com/articles/s41598-021-89660-z) 
+ 
+ 
+```{r}
+
+# subset the rest of the data to include at least one file per taxon per site and per night
+
+# Do I need to subset by siteplot by year first? 
+# factorize nights? 
+
+
+# res <- list()
+# counter <- 1
+# for(s in criteria){
+#   tmp <- data[data$name == c, ]
+#   criteria2 <- unique(tmp$name2)
+#   for(c2 in criteria2){
+#     tmp2 <- tmp[tmp$name2 == c2, ]
+#     criteria3 <- levels(tmp$name3)
+#     for(c3 in criteria3){
+#       tmp3 <- tmp2[tmp2$name3 == c3, ]
+#       randomRow <- sample(nrow(tmp3))
+#       res[[counter]] <- tmp3[randomRow, ]
+#       counter <- counter+1
+#     }
+#   }
+# }
+
+
+# make a smaller subset to try on first 
+ff <- FF %>% filter(siteplotyear %in% c("FF01-OB-2021", "FF02-CB-2022") )
+ff$jnight <- yday(ff$DATE.12)
+
+siteplotlist <- levels(ff$siteplotyear)
+
+res <- list()
+counter <- 1
+for(s in siteplotlist){
+  tmp <- ff[ff$siteplotyear == s, ]
+  nights <- unique(tmp$jnight)
+  for(n in nights){
+    tmp2 <- tmp[tmp$jnight == n, ]
+    batspecies <- levels(tmp$autoid)
+    for(b in autoids){
+      tmp3 <- tmp2[tmp2$autoid == b, ]
+      randomRow <- sample(nrow(tmp3))
+      res[[counter]] <- tmp3[randomRow, ]
+      counter <- counter + 1
+    }
+  }
+}
+
+beep()
+
+res.df <- do.call(rbind,res)
+
+```
+ 
+
