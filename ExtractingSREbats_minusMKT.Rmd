@@ -1,0 +1,221 @@
+---
+title: "ExtractingFilesForManualAcousticAnalysis"
+output: html_document
+date: "2023-10-13"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Extract all SRE data
+- Store by AUTOID
+- Remove files that have already been identifed for Mathilde KT's thesis 
+
+# Set up working space, import datasets 
+```{r}
+library(data.table)
+library(tidyverse)
+library(beepr)
+library(lubridate)
+library(purrr)
+library(janitor)
+#renv::install("rstudio/renv")
+library(renv)
+library(stringr)
+library(kableExtra)
+library(papeR)
+library(skimr)
+library(vtable)
+library(ggdark)
+library(beepr)
+
+## Setup output directory 
+output <- "C:/Users/apmc/OneDrive - Norwegian University of Life Sciences/3. Follo Forest 2021-2023/Manuscripts/Analyses/Outputs"
+
+file.name <- "ExtractingSREBatAcousticData"
+
+todays_date <- Sys.Date()
+ 
+dir.name <- str_c(output,"/", file.name, "_", todays_date)
+dir.name
+ 
+output_today <- dir.name
+output_today
+
+dir.create(output_today)
+output_today
+# "C:/Users/apmc/OneDrive - Norwegian University of Life Sciences/3. Follo Forest 2021-2023/Manuscripts/Analyses/Outputs/ExtractingSREBatAcousticData_2023-10-13"
+
+# Mathilde's dataset 
+mkt <- read_csv("P:/FolloForest2021/FolloForest2022/Acoustics/MathildeKTholme/OB/FinalManualIDOutput_MKT_24022023.csv",
+     col_types = cols(...1 = col_skip()))
+dim(mkt)
+# 19811    51
+names(mkt)
+#  [1] "INDIR"          "OUTDIR"         "FOLDER"         "file.name"      "CHANNEL"       
+#  [6] "OFFSET"         "DURATION"       "OUT.FILE.FS"    "OUT.FILE.ZC"    "DATE"          
+# [11] "TIME"           "HOUR"           "DATE.12"        "TIME.12"        "HOUR.12"       
+# [16] "AUTO.ID"        "PULSES"         "MATCHING"       "MATCH.RATIO"    "MARGIN"        
+# [21] "ALTERNATE.1"    "ALTERNATE.2"    "N"              "Fc"             "Sc"            
+# [26] "Dur"            "Fmax"           "Fmin"           "Fmean"          "TBC"           
+# [31] "Fk"             "Tk"             "S1"             "Tc"             "Qual"          
+# [36] "FILES"          "MANUAL.ID."     "ORGID"          "USERID"         "REVIEW.ORGID"  
+# [41] "REVIEW.USERID"  "INPATHMD5"      "OUTPATHMD5FS"   "OUTPATHMD5ZC"   "behavior"      
+# [46] "manualid"       "Site"           "SitePlot"       "PlotType"       "manualid_clean"
+
+
+# All file path and plot information for the 2023 FF data (includes noise)
+metaplot <- read_csv("P:/FolloForest2021/FolloForest2022/Acoustics/Extraction/completefilepaths_withfilenames_PlotType.csv", col_types = cols(...1 = col_skip()))
+dim(metaplot)
+# 494274      6
+names(metaplot)
+# "fullpath"   "Site"       "SitePlot"   "Collection" "file.name"  "PlotType"
+
+
+FF <- read_csv("C:/Users/apmc/OneDrive - Norwegian University of Life Sciences/3. Follo Forest 2021-2023/Manuscripts/Analyses/Outputs/SummarizingBatAcousticData_2023-10-12/Simple_AllBatData.CSV",
+     col_types = cols(...1 = col_skip()))
+dim(FF)
+# [1] 416936     17
+
+## Format columns:
+FF <- FF %>% dplyr:: mutate(Site = factor(Site), 
+                            SitePlot = factor(SitePlot),
+                            Plot = factor(Plot), 
+                            Collection = factor(Collection),
+                            year = factor(year), 
+                            autoid = factor(autoid))
+
+summary(FF$Site)
+ #  FF01   FF02   FF03   FF04   FF05   FF06   FF07   FF08   FF09   FF10   FF11   FF12 
+ # 18771  47039   8611  41662  14517   9257  18620 140831  45080  12753  47736  12059
+
+summary(FF$Plot)
+  # Canopy Interior     Open 
+  # 135620    86986   194330 
+
+summary(FF$SitePlot)
+# FF01-CB FF01-IB FF01-OB FF02-CB FF02-IB FF02-OB FF03-CB 
+#    8894    3490    6387   16167   12240   18632    4560 
+# FF03-IB FF03-OB FF04-CB FF04-IB FF04-OB FF05-CB FF05-IB 
+#     989    3062    7478    3421   30763    3757    2515 
+# FF05-OB FF06-CB FF06-IB FF06-OB FF07-CB FF07-IB FF07-OB 
+#    8245    4893     795    3569    7080    5421    6119 
+# FF08-CB FF08-IB FF08-OB FF09-CB FF09-IB FF09-OB FF10-CB 
+#   36255   32732   71844   10206    8106   26768    5008 
+# FF10-IB FF10-OB FF11-CB FF11-IB FF11-OB FF12-CB FF12-IB 
+#    2638    5107   25614   11892   10230    5708    2747 
+# FF12-OB 
+#    3604
+summary(FF$autoid)
+
+# BARBAR EPTNIL EPTSER MYOALC MYOBEC MYOBRA 
+#   2337 127540   5132    240    379  20195 
+# MYODAS MYODAU MYOMYO MYOMYS MYONAT NYCLEI 
+#   6622  25764    291  16714    627   1624 
+# NYCNOC   NoID PIPNAT PIPPIP PIPPYG PLEAUR 
+#   7662 113862   2469  11792  66006   5448 
+# PLEAUS VESMUR 
+#   1928    304
+
+## Quick and easy summary tables 
+# kbl(summarize( FF, type = "factor", variables = "siteplotyear", 
+#      caption = "2021 and 2022 Follo Forest Bat Data Summary by SitePlot")) %>%  kable_styling()
+```
+
+
+## Gather metadata of all bat passes
+- Subset FF to only include SRE bats 
+- Remove files that are in the mkt dataset
+```{r}
+
+FF1 <- FF %>% filter(autoid %in% c("BARBAR", "MYOALC", "MYOBEC",
+                     "MYOBRA", "MYODAS", "MYODAU",
+                     "MYOMYO", "MYOMYS", "MYONAT",
+                     "PLEAUS", "PLEAUR")) %>% 
+  droplevels() %>% 
+  mutate(file.name = OUT.FILE.FS)
+# 80545 bat passes 
+  
+mkt1 <- mkt %>% select(file.name) %>% distinct() #19001 bat passes 
+
+FF2 <- anti_join(FF1, mkt1)
+# 80545 - 19001
+# 61544 observations of 18 variables - makes sense 
+
+# write.csv(FF2, file = file.path(output_today, "FF2021-2022_SREdata_MKT_DataRemoved.csv"))
+# 13.10.2023
+
+```
+
+# List file paths for all the processed files that match the criteria 
+```{r}
+# FF$Site <- gsub("FF1", "FF01", FF$Site)
+# P:\FolloForest2021\FolloForest2021\test
+# FF2$OUTDIR <- gsub("\\", "/", FF2$OUTDIR, fixed = TRUE)
+# FF2$fullpath <- paste0(FF2$OUTDIR, "/DATA/Data/", FF2$OUT.FILE.FS) 
+# 
+# head(FF2$fullpath)
+# 
+# FF2$fullpath <- gsub("//largefile.nmbu.no/Project/", "P:/FolloForest2021/", FF2$fullpath)
+# FF2$fullpath <- gsub("P:/FolloForest2021/FolloForest2021/FolloForest2022/", "P:/FolloForest2021/FolloForest2022/", FF2$fullpath) 
+# FF2$fullpath <- gsub("Bat Acoustic Data", "BatAcousticData", FF2$fullpath) 
+# # NMBU IT moved these files in 2023 to a different project folder
+# 
+# test <- sample(FF2$fullpath, 30 )
+# test <- as.data.frame(test)
+# test <- test %>% rename(file.path = test)
+# 
+# dir.create("P:/FolloForest2021/FolloForest2021/test")
+# write.csv(test, "P:/FolloForest2021/FolloForest2021/test.csv") 
+# 
+# # Prepare to link and copy files to correct input and output directories 
+# test_dir<- "P:/FolloForest2021/FolloForest2021/test"
+# test_my_files <- as.list(test$file.path)
+# test_my_files_list <- unlist(test_my_files)# 154 elements
+# head(test_my_files_list)
+# 
+# # Copy files that match the file paths into a new folder. 
+# file.copy(from = test_my_files_list,
+#            to = test_dir)
+#  beep()
+
+## Separate by year because the files are stored in different locations for each year
+ff21 <- FF2 %>% filter(year == "2021") %>% droplevels()
+ff22 <- FF2 %>% filter(year == "2022") %>% droplevels()
+
+# All raw and processed bat data located here
+input_ff21 <-"P:/FolloForest2021/FolloForest2021/Processed_Data/BatAcousticData"
+input_ff22 <-"P:/FolloForest2021/FolloForest2022/Acoustics"
+# This will select the file path of all processed bat acoustic files which always have this same file ending (000.wav)
+
+# This is going to take an eternity.
+#my_files_ff21 <- list.files(path = input_ff21, pattern="000.wav", recursive = TRUE) 
+#beep()
+
+# my_files_ff21_df <- as.data.frame(my_files_ff21)
+# dim(my_files_ff21_df)
+# 484313      1
+#write.csv(my_files_ff21_df, file = file.path(output_today, "CompleteFilePath_ProcessedFF2021data.csv"))
+
+filepaths2021 <- read_csv("C:/Users/apmc/OneDrive - Norwegian University of Life Sciences/3. Follo Forest 2021-2023/Manuscripts/Analyses/Outputs/ExtractingSREBatAcousticData_2023-10-13/CompleteFilePath_ProcessedFF2021data.csv", 
+     col_types = cols(...1 = col_skip()))
+
+#my_files_ff22 <- list.files(path = input_ff22, pattern="000.wav", recursive = TRUE) 
+# This is going to take an eternity.
+#beep()
+
+# my_files_ff22_df <- as.data.frame(my_files_ff22)
+# dim(my_files_ff22_df)
+#494979      1
+
+#write.csv(my_files_ff22_df, file = file.path(output_today, "CompleteFilePath_ProcessedFF2022data.csv")) 
+
+filepaths2022 <- read_csv("C:/Users/apmc/OneDrive - Norwegian University of Life Sciences/3. Follo Forest 2021-2023/Manuscripts/Analyses/Outputs/ExtractingSREBatAcousticData_2023-10-13/CompleteFilePath_ProcessedFF2022data.csv", 
+     col_types = cols(...1 = col_skip()))
+
+# 
+# test <- str_detect(filepaths2022$my_files_ff22, "NOISE") # Not sure why this doesn't line up... 
+# summary(test)
+```
+
