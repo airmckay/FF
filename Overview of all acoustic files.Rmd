@@ -839,8 +839,8 @@ sub_NoID <- full_join(sub_NoID_pt1, IB_NoID) #7500 obs
 alt4 <- full_join(alt2.5, sub_NoID)
 dim(alt4) # 103874 
 
-#write.csv(alt4, file = file.path(output_today, "alt4.csv")
-
+# write.csv(alt4, file = file.path(output_today, "alt4.csv")) 
+# 17.10.2023
 ```
  
 ### Visualize to compare 
@@ -1101,6 +1101,17 @@ dim(FF1)
 # for (i in autoids) {
 #     newdir <- paste0("P:/FolloForest2021/FolloForest_ManualAcousticAnalysis/",i)
 #     dir.create(newdir) }
+
+
+#Now lets try and export just the data for BABA
+
+BABA <- FF1 %>% dplyr::filter(autoid == "BARBAR") #2337 batpasses 
+BABA.filepaths <- BABA$fullfilepath
+
+# # Copy files that match the file paths into a new folder. 
+# file.copy(from = BABA.filepaths,
+#            to = "P:/FolloForest2021/FolloForest_ManualAcousticAnalysis/BARBAR/WAV")
+#  beep() # that worked! - check the kaleidoscope connection next. 
 
 ```
 
