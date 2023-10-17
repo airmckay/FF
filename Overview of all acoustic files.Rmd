@@ -139,6 +139,7 @@ library(skimr)
 library(vtable)
 library(ggdark)
 library(beepr)
+library(readr)
 
 ## Setup output directory 
 output <- "C:/Users/apmc/OneDrive - Norwegian University of Life Sciences/3. Follo Forest 2021-2023/Manuscripts/Analyses/Outputs"
@@ -811,6 +812,34 @@ alt3 <- alt3 %>% dplyr:: mutate(Site = factor(Site),
                             year = factor(year), 
                             autoid = factor(autoid))
 
+#### alt 4 
+#### Final alternative: this is the same as alt2 but NoIDS are subsetted differently. 
+
+alt2.5 <- alt2 %>% dplyr::filter(autoid != "NoID") 
+
+# # randomly selected 2500 observations of NoID per plot type
+#   # OB
+OB <- FF %>% dplyr::filter(Plot == "Open" & autoid == "NoID") 
+OBx <- sample(1:nrow(OB), 2500) # these are the row numbers 
+OB_NoID <- OB[OBx, ]
+
+#   # CB
+CB <- FF %>% dplyr::filter(Plot == "Canopy" & autoid == "NoID") 
+CBx <- sample(1:nrow(CB), 2500) # these are the row numbers 
+OB_NoID <- CB[CBx, ]
+
+#   # IB
+IB <- FF %>% dplyr::filter(Plot == "Interior" & autoid == "NoID") 
+IBx <- sample(1:nrow(IB), 2500) # these are the row numbers 
+IB_NoID <- IB[IBx, ]
+
+sub_NoID_pt1 <- full_join(OB_NoID, CB_NoID)
+sub_NoID <- full_join(sub_NoID_pt1, IB_NoID) #7500 obs 
+
+alt4 <- full_join(alt2.5, sub_NoID)
+dim(alt4) # 103874 
+
+#write.csv(alt4, file = file.path(output_today, "alt4.csv")
 
 ```
  
@@ -941,6 +970,137 @@ ba322 <-  alt3 %>%
   coord_flip() + ggtitle("alt3 - 2021")
 ba322
 
+
+
+summary(alt2)
+
+```
+
+# Check for inconsistencies with the filepaths 
+```{r}
+
+ff21 <- FF %>% filter(year == "2021") %>% droplevels() 
+ff22 <- FF %>% filter(year == "2022") %>% droplevels() 
+
+input_ff21 <-"P:/FolloForest2021/FolloForest2021/Processed_Data/BatAcousticData"
+input_ff22 <-"P:/FolloForest2021/FolloForest2022/Acoustics"
+
+#### FF 2021 #### 
+filepaths2021 <- read_csv("C:/Users/apmc/OneDrive - Norwegian University of Life Sciences/3. Follo Forest 2021-2023/Manuscripts/Analyses/Outputs/ExtractingSREBatAcousticData_2023-10-13/CompleteFilePath_ProcessedFF2021data.csv", 
+     col_types = cols(...1 = col_skip()))
+head(filepaths2021)
+#  FF1/FF1-CB/WAV_FF1-CB_06.09.2021_A/Data/NOISE/S4U12331_20210728_222711_000.wav
+tail(filepaths2021)
+#  FF9/FF9-OB/WAV_FF9-OB_30.08.2021/DATA/Data/S4U12493_20210830_042604_000.wav
+
+# Remove NOISE files 
+fp21 <- filepaths2021 %>% 
+  filter(!str_detect(my_files_ff21, 'NOISE'))
+dim(fp21)
+# 222529      1
+dim(ff21)
+# 222521     17
+# 8 more observations in the filepaths than in the data with metadata... `
+
+head(fp21)
+#  FF1/FF1-CB/WAV_FF1-CB_06.09.2021_A/Data/S4U12331_20210728_222716_000.wav
+
+## Remove the DATA folders (this is inconsistent)
+#gsub("\\", "/", bats22$INDIR, fixed = TRUE)
+fp21$fp1 <- gsub("/Data", "", fp21$my_files_ff21)
+fp21$fp2 <- gsub("/DATA", "", fp21$fp1)
+head(fp21$fp2)
+
+#"FF1/FF1-CB/WAV_FF1-CB_06.09.2021_A/S4U12331_20210728_222716_000.wav"
+incols <- c("Site", "SitePlot", "Collection", "filename")
+
+fp21.1 <- fp21 %>% 
+  tidyr::separate(col = fp2, 
+                  sep = "/",
+                  into = incols,
+                  remove = TRUE)
+
+fp21.1$filepath <- fp21.1$my_files_ff21
+fp21.1$siteplotyear <- paste0(fp21.1$SitePlot, "-2021")
+fp21.2 <- fp21.1 %>% dplyr::select(filepath, filename)
+
+ff21$filename <- ff21$OUT.FILE.FS
+
+FF2021 <- left_join(ff21, fp21.2)
+
+FF2021$fullfilepath <- paste0(input_ff21, "/", FF2021$filepath)
+
+test <- anti_join(fp21.2, ff21)
+missing2021 <- left_join(test, ff21)
+
+# 8 obs from FF04-CB collected on 30.08.2021
+# write.csv(missing2021, file = file.path(output_today, "FF2021_filepaths_but_no_metadata.csv")) 
+
+
+#### 2022 ####
+filepaths2022 <- read_csv("C:/Users/apmc/OneDrive - Norwegian University of Life Sciences/3. Follo Forest 2021-2023/Manuscripts/Analyses/Outputs/ExtractingSREBatAcousticData_2023-10-13/CompleteFilePath_ProcessedFF2022data.csv", 
+     col_types = cols(...1 = col_skip()))
+
+fp22 <- filepaths2022 %>% 
+  dplyr::filter(!str_detect(my_files_ff22, 'NOISE')) %>% 
+  dplyr::filter(str_detect(my_files_ff22, '_000.wav'))
+dim(fp22)
+# 494974      1 # lost five observations that came from the raw/unprocessed data
+dim(ff22)
+# 194415     17
+# Looks like the FF22 data did not have noise files put into a separate folder?
+
+## Remove the DATA folders (this is inconsistent)
+#gsub("\\", "/", bats22$INDIR, fixed = TRUE)
+fp22$fp1 <- gsub("/Data", "", fp22$my_files_ff22)
+fp22$fp2 <- gsub("/DATA", "", fp22$fp1)
+fp22$fp3 <- gsub("/WAV/", "/", fp22$fp2)
+fp22$fp4 <- gsub("/New folder", "", fp22$fp3)
+
+head(fp22$fp4)
+
+
+#"FF01/FF01-CB_FF01-CB_05.07.2022/S4U12331_20220607_220237_000.wav"
+incols <- c("Site", "SitePlot", "Collection", "filename")
+
+fp22.1 <- fp22 %>% 
+  tidyr::separate(col = fp4, 
+                  sep = "/",
+                  into = incols,
+                  remove = TRUE)
+
+fp22.1$filepath <- fp22.1$my_files_ff22
+fp22.1$siteplotyear <- paste0(fp22.1$SitePlot, "-2022")
+fp22.2 <- fp22.1 %>% dplyr::select(filepath, filename)
+
+ff22$filename <- ff22$OUT.FILE.FS
+
+FF2022 <- left_join(ff22, fp22.2)
+
+FF2022$fullfilepath <- paste0(input_ff22, "/", FF2022$filepath)
+
+test <- anti_join(fp22.2, ff22)
+missing2022 <- left_join(test, ff22) # very good chance this is mostly noise, but will have to check later... 
+# 299859 obs 
+#write.csv(missing2022, file = file.path(output_today, "FF2022_filepaths_but_no_metadata.csv")) 
+
+FF1 <- full_join(FF2021, FF2022)
+dim(FF1)
+# 416936     20 # with file path s
+#write.csv(FF1, file = file.path(output_today, "FF_alldata_withfilepaths.csv")) 
+
+```
+
+
+# Select SRE bats and copy them to a new location for manual acoustic analysis
+```{r}
+
+# create a new folder for each of the autoids of all the autoids 
+#autoids <- unique(FF1$autoid)
+
+# for (i in autoids) {
+#     newdir <- paste0("P:/FolloForest2021/FolloForest_ManualAcousticAnalysis/",i)
+#     dir.create(newdir) }
 
 ```
 
