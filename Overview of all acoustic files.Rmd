@@ -793,8 +793,8 @@ alt1 <- alt1 %>% dplyr:: mutate(Site = factor(Site),
 alt2 <- read_csv("C:/Users/apmc/OneDrive - Norwegian University of Life Sciences/3. Follo Forest 2021-2023/Manuscripts/Analyses/Outputs/SummarizingBatAcousticData_2023-10-12/alternative_subset2.csv",
      col_types = cols(...1 = col_skip()))
 
-alt3 <- read_csv("C:/Users/apmc/OneDrive - Norwegian University of Life Sciences/3. Follo Forest 2021-2023/Manuscripts/Analyses/Outputs/SummarizingBatAcousticData_2023-10-12/alternative_subset3.csv",
-     col_types = cols(...1 = col_skip()))
+#alt3 <- read_csv("C:/Users/apmc/OneDrive - Norwegian University of Life Sciences/3. Follo Forest 2021-2023/Manuscripts/Analyses/Outputs/SummarizingBatAcousticData_2023-10-12/alternative_subset3.csv",
+#     col_types = cols(...1 = col_skip()))
 
 # format columns 
 alt2 <- alt2 %>% dplyr:: mutate(Site = factor(Site), 
@@ -805,12 +805,12 @@ alt2 <- alt2 %>% dplyr:: mutate(Site = factor(Site),
                             autoid = factor(autoid))
 
 
-alt3 <- alt3 %>% dplyr:: mutate(Site = factor(Site), 
-                            SitePlot = factor(SitePlot),
-                            Plot = factor(Plot), 
-                            Collection = factor(Collection),
-                            year = factor(year), 
-                            autoid = factor(autoid))
+#alt3 <- alt3 %>% dplyr:: mutate(Site = factor(Site), 
+                            # SitePlot = factor(SitePlot),
+                            # Plot = factor(Plot), 
+                            # Collection = factor(Collection),
+                            # year = factor(year), 
+                            # autoid = factor(autoid))
 
 #### alt 4 
 #### Final alternative: this is the same as alt2 but NoIDS are subsetted differently. 
@@ -826,7 +826,7 @@ OB_NoID <- OB[OBx, ]
 #   # CB
 CB <- FF %>% dplyr::filter(Plot == "Canopy" & autoid == "NoID") 
 CBx <- sample(1:nrow(CB), 2500) # these are the row numbers 
-OB_NoID <- CB[CBx, ]
+CB_NoID <- CB[CBx, ]
 
 #   # IB
 IB <- FF %>% dplyr::filter(Plot == "Interior" & autoid == "NoID") 
@@ -838,9 +838,10 @@ sub_NoID <- full_join(sub_NoID_pt1, IB_NoID) #7500 obs
 
 alt4 <- full_join(alt2.5, sub_NoID)
 dim(alt4) # 103874 
-
 # write.csv(alt4, file = file.path(output_today, "alt4.csv")) 
-# 17.10.2023
+# 19.10.2023
+
+
 ```
  
 ### Visualize to compare 
@@ -1089,6 +1090,9 @@ dim(FF1)
 # 416936     20 # with file path s
 #write.csv(FF1, file = file.path(output_today, "FF_alldata_withfilepaths.csv")) 
 
+kbl(summarize( FF1, type = "factor", variables = "autoid",
+     caption = "2021 and 2022 Follo Forest Bat Data Summary by autoid")) %>%  kable_styling()
+
 ```
 
 
@@ -1096,22 +1100,163 @@ dim(FF1)
 ```{r}
 
 # create a new folder for each of the autoids of all the autoids 
-#autoids <- unique(FF1$autoid)
+autoids <- unique(FF1$autoid)
+autoids
 
 # for (i in autoids) {
 #     newdir <- paste0("P:/FolloForest2021/FolloForest_ManualAcousticAnalysis/",i)
 #     dir.create(newdir) }
 
 
-#Now lets try and export just the data for BABA
-
-BABA <- FF1 %>% dplyr::filter(autoid == "BARBAR") #2337 batpasses 
+# Export all the SRE bats first 
+FF2 <- FF1 %>% filter(autoid %in% c("BARBAR", "MYOALC", "MYOBEC",
+                     "MYOBRA", "MYODAS", "MYODAU",
+                     "MYOMYO", "MYOMYS", "MYONAT",
+                     "PLEAUS", "PLEAUR")) %>% droplevels()
+# BARBAR
+BABA <- FF2 %>% dplyr::filter(autoid == "BARBAR") #2337 bat passes 
 BABA.filepaths <- BABA$fullfilepath
 
 # # Copy files that match the file paths into a new folder. 
 # file.copy(from = BABA.filepaths,
 #            to = "P:/FolloForest2021/FolloForest_ManualAcousticAnalysis/BARBAR/WAV")
 #  beep() # that worked! - check the kaleidoscope connection next. 
+
+################################################################################
+
+# MYOALC
+MYOALC <- FF2 %>% dplyr::filter(autoid == "MYOALC") #240 bat passes 
+MYOALC.filepaths <- MYOALC$fullfilepath
+
+dir.create("P:/FolloForest2021/FolloForest_ManualAcousticAnalysis/MYOALC/WAV")
+
+# # Copy files that match the file paths into a new folder. 
+file.copy(from = MYOALC.filepaths,
+           to = "P:/FolloForest2021/FolloForest_ManualAcousticAnalysis/MYOALC/WAV")
+ beep() # that worked! 
+
+################################################################################
+
+# MYOBEC
+MYOBEC <- FF2 %>% dplyr::filter(autoid == "MYOBEC") #379 bat passes 
+MYOBEC.filepaths <- MYOBEC$fullfilepath
+
+dir.create("P:/FolloForest2021/FolloForest_ManualAcousticAnalysis/MYOBEC/WAV")
+
+# # Copy files that match the file paths into a new folder. 
+file.copy(from = MYOBEC.filepaths,
+           to = "P:/FolloForest2021/FolloForest_ManualAcousticAnalysis/MYOBEC/WAV")
+ beep() # that worked! 
+
+################################################################################
+ 
+ # MYOBRA
+MYOBRA <- FF2 %>% dplyr::filter(autoid == "MYOBRA") #20195 bat passes 
+MYOBRA.filepaths <- MYOBRA$fullfilepath
+
+dir.create("P:/FolloForest2021/FolloForest_ManualAcousticAnalysis/MYOBRA/WAV")
+
+# # Copy files that match the file paths into a new folder. 
+file.copy(from = MYOBRA.filepaths,
+           to = "P:/FolloForest2021/FolloForest_ManualAcousticAnalysis/MYOBRA/WAV")
+ beep() # that worked! 
+
+################################################################################
+ 
+ # MYODAS
+MYODAS <- FF2 %>% dplyr::filter(autoid == "MYODAS") #6622 bat passes 
+MYODAS.filepaths <- MYODAS$fullfilepath
+
+dir.create("P:/FolloForest2021/FolloForest_ManualAcousticAnalysis/MYODAS/WAV")
+
+# # Copy files that match the file paths into a new folder. 
+file.copy(from = MYODAS.filepaths,
+           to = "P:/FolloForest2021/FolloForest_ManualAcousticAnalysis/MYODAS/WAV")
+ beep() # that worked! 
+
+################################################################################
+ 
+ # MYODAU
+MYODAU <- FF2 %>% dplyr::filter(autoid == "MYODAU") #25764 batpasses 
+MYODAU.filepaths <- MYODAU$fullfilepath
+
+dir.create("P:/FolloForest2021/FolloForest_ManualAcousticAnalysis/MYODAU/WAV")
+
+# # Copy files that match the file paths into a new folder. 
+file.copy(from = MYODAU.filepaths,
+           to = "P:/FolloForest2021/FolloForest_ManualAcousticAnalysis/MYODAU/WAV")
+ beep() # that worked! 
+ 
+ 
+ ## Need to break this into multiple subdirectories. 
+
+################################################################################
+ 
+ # MYOMYO
+MYOMYO <- FF2 %>% dplyr::filter(autoid == "MYOMYO") #291 batpasses 
+MYOMYO.filepaths <- MYOMYO$fullfilepath
+
+dir.create("P:/FolloForest2021/FolloForest_ManualAcousticAnalysis/MYOMYO/WAV")
+
+# # Copy files that match the file paths into a new folder. 
+file.copy(from = MYOMYO.filepaths,
+           to = "P:/FolloForest2021/FolloForest_ManualAcousticAnalysis/MYOMYO/WAV")
+ beep() # that worked! 
+
+################################################################################
+ ### Start here 
+ # MYOMYS
+MYOMYS <- FF2 %>% dplyr::filter(autoid == "MYOMYS") #240 batpasses 
+MYOMYS.filepaths <- MYOMYS$fullfilepath
+
+dir.create("P:/FolloForest2021/FolloForest_ManualAcousticAnalysis/MYOMYS/WAV")
+
+# # Copy files that match the file paths into a new folder. 
+file.copy(from = MYOMYS.filepaths,
+           to = "P:/FolloForest2021/FolloForest_ManualAcousticAnalysis/MYOMYS/WAV")
+ beep() # that worked! 
+
+################################################################################
+ 
+ # MYONAT
+MYONAT <- FF2 %>% dplyr::filter(autoid == "MYONAT") #240 batpasses 
+MYONAT.filepaths <- MYONAT$fullfilepath
+
+dir.create("P:/FolloForest2021/FolloForest_ManualAcousticAnalysis/MYONAT/WAV")
+
+# # Copy files that match the file paths into a new folder. 
+file.copy(from = MYONAT.filepaths,
+           to = "P:/FolloForest2021/FolloForest_ManualAcousticAnalysis/MYONAT/WAV")
+ beep() # that worked! 
+
+################################################################################
+ 
+ # PLEAUR
+PLEAUR <- FF2 %>% dplyr::filter(autoid == "PLEAUR") #240 batpasses 
+PLEAUR.filepaths <- PLEAUR$fullfilepath
+
+dir.create("P:/FolloForest2021/FolloForest_ManualAcousticAnalysis/PLEAUR/WAV")
+
+# # Copy files that match the file paths into a new folder. 
+file.copy(from = PLEAUR.filepaths,
+           to = "P:/FolloForest2021/FolloForest_ManualAcousticAnalysis/PLEAUR/WAV")
+ beep() # that worked! 
+
+################################################################################
+ 
+ # PLEAUS
+PLEAUS <- FF2 %>% dplyr::filter(autoid == "PLEAUS") #240 batpasses 
+PLEAUS.filepaths <- PLEAUS$fullfilepath
+
+dir.create("P:/FolloForest2021/FolloForest_ManualAcousticAnalysis/PLEAUS/WAV")
+
+# # Copy files that match the file paths into a new folder. 
+file.copy(from = PLEAUS.filepaths,
+           to = "P:/FolloForest2021/FolloForest_ManualAcousticAnalysis/PLEAUS/WAV")
+ beep() # that worked! 
+
+################################################################################
+
 
 ```
 
