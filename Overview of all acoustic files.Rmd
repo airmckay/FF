@@ -1036,7 +1036,7 @@ missing2021 <- left_join(test, ff21)
 
 # 8 obs from FF04-CB collected on 30.08.2021
 # write.csv(missing2021, file = file.path(output_today, "FF2021_filepaths_but_no_metadata.csv")) 
-
+#24.10.2023
 
 #### 2022 ####
 filepaths2022 <- read_csv("C:/Users/apmc/OneDrive - Norwegian University of Life Sciences/3. Follo Forest 2021-2023/Manuscripts/Analyses/Outputs/ExtractingSREBatAcousticData_2023-10-13/CompleteFilePath_ProcessedFF2022data.csv", 
@@ -1083,7 +1083,9 @@ FF2022$fullfilepath <- paste0(input_ff22, "/", FF2022$filepath)
 test <- anti_join(fp22.2, ff22)
 missing2022 <- left_join(test, ff22) # very good chance this is mostly noise, but will have to check later... 
 # 299859 obs 
+
 #write.csv(missing2022, file = file.path(output_today, "FF2022_filepaths_but_no_metadata.csv")) 
+# 24.10.2023
 
 FF1 <- full_join(FF2021, FF2022)
 dim(FF1)
@@ -1114,8 +1116,9 @@ FF2 <- FF1 %>% filter(autoid %in% c("BARBAR", "MYOALC", "MYOBEC",
                      "MYOMYO", "MYOMYS", "MYONAT",
                      "PLEAUS", "PLEAUR")) %>% droplevels()
 # BARBAR
-BABA <- FF2 %>% dplyr::filter(autoid == "BARBAR") #2337 bat passes 
-BABA.filepaths <- BABA$fullfilepath
+BARBAR <- FF2 %>% dplyr::filter(autoid == "BARBAR") #2337 bat passes 
+write.csv(BARBAR, "P:/FolloForest2021/FolloForest_ManualAcousticAnalysis/BARBAR/BARBAR_meta.csv")
+BABA.filepaths <- BARBAR$fullfilepath
 
 # # Copy files that match the file paths into a new folder. 
 # file.copy(from = BABA.filepaths,
@@ -1126,6 +1129,7 @@ BABA.filepaths <- BABA$fullfilepath
 
 # MYOALC
 MYOALC <- FF2 %>% dplyr::filter(autoid == "MYOALC") #240 bat passes 
+write.csv(MYOALC, "P:/FolloForest2021/FolloForest_ManualAcousticAnalysis/MYOALC/MYOALC_meta.csv")
 MYOALC.filepaths <- MYOALC$fullfilepath
 
 dir.create("P:/FolloForest2021/FolloForest_ManualAcousticAnalysis/MYOALC/WAV")
@@ -1139,6 +1143,7 @@ file.copy(from = MYOALC.filepaths,
 
 # MYOBEC
 MYOBEC <- FF2 %>% dplyr::filter(autoid == "MYOBEC") #379 bat passes 
+write.csv(MYOBEC, "P:/FolloForest2021/FolloForest_ManualAcousticAnalysis/MYOBEC/MYOBEC_meta.csv")
 MYOBEC.filepaths <- MYOBEC$fullfilepath
 
 dir.create("P:/FolloForest2021/FolloForest_ManualAcousticAnalysis/MYOBEC/WAV")
@@ -1149,22 +1154,106 @@ file.copy(from = MYOBEC.filepaths,
  beep() # that worked! 
 
 ################################################################################
- 
+################################################################################
+################################################################################
+################################################################################
  # MYOBRA
 MYOBRA <- FF2 %>% dplyr::filter(autoid == "MYOBRA") #20195 bat passes 
+write.csv(MYOBRA, "P:/FolloForest2021/FolloForest_ManualAcousticAnalysis/MYOBRA/MYOBRA_meta.csv")
 MYOBRA.filepaths <- MYOBRA$fullfilepath
 
-dir.create("P:/FolloForest2021/FolloForest_ManualAcousticAnalysis/MYOBRA/WAV")
+dim(MYOBRA)
+# 20195    20
+## This is too large to process all at once 
 
-# # Copy files that match the file paths into a new folder. 
-file.copy(from = MYOBRA.filepaths,
-           to = "P:/FolloForest2021/FolloForest_ManualAcousticAnalysis/MYOBRA/WAV")
- beep() # that worked! 
+# dir.create("P:/FolloForest2021/FolloForest_ManualAcousticAnalysis/MYOBRA/WAV")
+# 
+# # # Copy files that match the file paths into a new folder. 
+# file.copy(from = MYOBRA.filepaths,
+#            to = "P:/FolloForest2021/FolloForest_ManualAcousticAnalysis/MYOBRA/WAV")
+#  beep() # that worked! 
+ 
+ 
+ ################################################################################
 
+# 20195 / 5 = 4039
+# This is more manageable 
+
+ ## Need to break this into multiple subdirectories. 
+ 
+ # 25764/12 = 2147 files
+ # Create 5 sub-directories within MYOBRA with 4039 files per folder 
+ 
+for (i in 1:5) {
+    newdir <- paste0("P:/FolloForest2021/FolloForest_ManualAcousticAnalysis/MYOBRA/WAV",i)
+    dir.create(newdir) } # that worked!
+ 
+ ## Copy 2147 files from the WAV folder into each sub directory 
+ 
+MYOBRA_wav<-  list.files("P:/FolloForest2021/FolloForest_ManualAcousticAnalysis/MYOBRA/WAV",)
+beep()
+
+MYOBRA_df <- as.data.frame(MYOBRA_wav)
+
+ ################################################################################
+
+MYOBRA1 <- MYOBRA_df[1:4039,]
+
+file.copy(from = paste0(
+  "P:/FolloForest2021/FolloForest_ManualAcousticAnalysis/MYOBRA/WAV/", MYOBRA1),
+           to = 
+            "P:/FolloForest2021/FolloForest_ManualAcousticAnalysis/MYOBRA/WAV1")
+beep()
+
+################################################################################
+
+MYOBRA2 <- MYOBRA_df[4040:8078,]
+
+file.copy(from = paste0(
+  "P:/FolloForest2021/FolloForest_ManualAcousticAnalysis/MYOBRA/WAV/", MYOBRA2),
+           to = 
+            "P:/FolloForest2021/FolloForest_ManualAcousticAnalysis/MYOBRA/WAV2")
+beep()
+
+################################################################################
+
+MYOBRA3 <- MYOBRA_df[8079:12117,]
+
+file.copy(from = paste0(
+  "P:/FolloForest2021/FolloForest_ManualAcousticAnalysis/MYOBRA/WAV/", MYOBRA3),
+           to = 
+            "P:/FolloForest2021/FolloForest_ManualAcousticAnalysis/MYOBRA/WAV3")
+beep()
+ 
+################################################################################
+
+MYOBRA4 <- MYOBRA_df[12118:16156,]
+
+file.copy(from = paste0(
+  "P:/FolloForest2021/FolloForest_ManualAcousticAnalysis/MYOBRA/WAV/", MYOBRA4),
+           to = 
+            "P:/FolloForest2021/FolloForest_ManualAcousticAnalysis/MYOBRA/WAV4")
+beep()
+ 
+
+################################################################################
+
+MYOBRA5 <- MYOBRA_df[12118:20195,]
+
+file.copy(from = paste0(
+  "P:/FolloForest2021/FolloForest_ManualAcousticAnalysis/MYOBRA/WAV/", MYOBRA5),
+           to = 
+            "P:/FolloForest2021/FolloForest_ManualAcousticAnalysis/MYOBRA/WAV5")
+beep()
+
+################################################################################
+################################################################################
+################################################################################
 ################################################################################
  
  # MYODAS
 MYODAS <- FF2 %>% dplyr::filter(autoid == "MYODAS") #6622 bat passes 
+#write.csv(MYODAS, "P:/FolloForest2021/FolloForest_ManualAcousticAnalysis/MYODAS/MYODAS_meta.csv")
 MYODAS.filepaths <- MYODAS$fullfilepath
 
 dir.create("P:/FolloForest2021/FolloForest_ManualAcousticAnalysis/MYODAS/WAV")
@@ -1175,9 +1264,13 @@ file.copy(from = MYODAS.filepaths,
  beep() # that worked! 
 
 ################################################################################
+################################################################################
+################################################################################
+################################################################################
  
  # MYODAU
 MYODAU <- FF2 %>% dplyr::filter(autoid == "MYODAU") #25764 batpasses 
+#write.csv(MYODAU, "P:/FolloForest2021/FolloForest_ManualAcousticAnalysis/MYODAU/MYODAU_meta.csv")
 MYODAU.filepaths <- MYODAU$fullfilepath
 
 dir.create("P:/FolloForest2021/FolloForest_ManualAcousticAnalysis/MYODAU/WAV")
@@ -1187,13 +1280,129 @@ file.copy(from = MYODAU.filepaths,
            to = "P:/FolloForest2021/FolloForest_ManualAcousticAnalysis/MYODAU/WAV")
  beep() # that worked! 
  
- 
+################################################################################
  ## Need to break this into multiple subdirectories. 
+ 
+ # 25764/12 = 2147 files
+ # Create 12 sub-directories within MYODAU with 2147 files per folder 
+ 
+# for (i in 1:12) {
+#     newdir <- paste0("P:/FolloForest2021/FolloForest_ManualAcousticAnalysis/MYODAU/WAV",i)
+#     dir.create(newdir) } # that worked!
+ 
+ ## Copy 2147 files from the WAV folder into each sub directory 
+ 
+myodau_wav<-  list.files("P:/FolloForest2021/FolloForest_ManualAcousticAnalysis/MYODAU/WAV",)
+beep()
 
+myodau_df <- as.data.frame(myodau_wav)
+
+myodau1 <- myodau_df[1:2147,]
+
+file.copy(from = paste0(
+  "P:/FolloForest2021/FolloForest_ManualAcousticAnalysis/MYODAU/WAV/", myodau1),
+           to = 
+            "P:/FolloForest2021/FolloForest_ManualAcousticAnalysis/MYODAU/WAV1")
+beep()
+
+
+myodau2 <- myodau_df[2148:4294,]
+
+file.copy(from = paste0(
+  "P:/FolloForest2021/FolloForest_ManualAcousticAnalysis/MYODAU/WAV/", myodau2),
+           to = 
+            "P:/FolloForest2021/FolloForest_ManualAcousticAnalysis/MYODAU/WAV2")
+beep()
+
+myodau3 <- myodau_df[4295:6441,]
+
+file.copy(from = paste0(
+  "P:/FolloForest2021/FolloForest_ManualAcousticAnalysis/MYODAU/WAV/", myodau3),
+           to = 
+            "P:/FolloForest2021/FolloForest_ManualAcousticAnalysis/MYODAU/WAV3")
+beep()
+
+myodau4 <- myodau_df[6442:8588,]
+
+file.copy(from = paste0(
+  "P:/FolloForest2021/FolloForest_ManualAcousticAnalysis/MYODAU/WAV/", myodau4),
+           to = 
+            "P:/FolloForest2021/FolloForest_ManualAcousticAnalysis/MYODAU/WAV4")
+beep()
+
+myodau5 <- myodau_df[8589:10735,]
+
+file.copy(from = paste0(
+  "P:/FolloForest2021/FolloForest_ManualAcousticAnalysis/MYODAU/WAV/", myodau5),
+           to = 
+            "P:/FolloForest2021/FolloForest_ManualAcousticAnalysis/MYODAU/WAV5")
+beep()
+
+
+myodau6 <- myodau_df[10736:12882,]
+
+file.copy(from = paste0(
+  "P:/FolloForest2021/FolloForest_ManualAcousticAnalysis/MYODAU/WAV/", myodau6),
+           to = 
+            "P:/FolloForest2021/FolloForest_ManualAcousticAnalysis/MYODAU/WAV6")
+beep()
+
+myodau7 <- myodau_df[12883:15029,]
+
+file.copy(from = paste0(
+  "P:/FolloForest2021/FolloForest_ManualAcousticAnalysis/MYODAU/WAV/", myodau7),
+           to = 
+            "P:/FolloForest2021/FolloForest_ManualAcousticAnalysis/MYODAU/WAV7")
+beep()
+
+myodau8 <- myodau_df[15030:17176,]
+
+file.copy(from = paste0(
+  "P:/FolloForest2021/FolloForest_ManualAcousticAnalysis/MYODAU/WAV/", myodau8),
+           to = 
+            "P:/FolloForest2021/FolloForest_ManualAcousticAnalysis/MYODAU/WAV8")
+beep()
+
+myodau9 <- myodau_df[17177:19323,]
+
+file.copy(from = paste0(
+  "P:/FolloForest2021/FolloForest_ManualAcousticAnalysis/MYODAU/WAV/", myodau9),
+           to = 
+            "P:/FolloForest2021/FolloForest_ManualAcousticAnalysis/MYODAU/WAV9")
+beep()
+
+myodau10 <- myodau_df[19324:21470,]
+
+file.copy(from = paste0(
+  "P:/FolloForest2021/FolloForest_ManualAcousticAnalysis/MYODAU/WAV/", myodau10),
+           to = 
+            "P:/FolloForest2021/FolloForest_ManualAcousticAnalysis/MYODAU/WAV10")
+beep()
+
+myodau11 <- myodau_df[21471:23617,]
+
+file.copy(from = paste0(
+  "P:/FolloForest2021/FolloForest_ManualAcousticAnalysis/MYODAU/WAV/", myodau11),
+           to = 
+            "P:/FolloForest2021/FolloForest_ManualAcousticAnalysis/MYODAU/WAV11")
+beep()
+
+myodau12 <- myodau_df[23618:25764,]
+
+file.copy(from = paste0(
+  "P:/FolloForest2021/FolloForest_ManualAcousticAnalysis/MYODAU/WAV/", myodau12),
+           to = 
+            "P:/FolloForest2021/FolloForest_ManualAcousticAnalysis/MYODAU/WAV12")
+beep()
+
+################################################################################
+################################################################################
+################################################################################
 ################################################################################
  
  # MYOMYO
 MYOMYO <- FF2 %>% dplyr::filter(autoid == "MYOMYO") #291 batpasses 
+# write.csv(MYOMYO, "P:/FolloForest2021/FolloForest_ManualAcousticAnalysis/MYOMYO/MYOMYO_meta.csv")
 MYOMYO.filepaths <- MYOMYO$fullfilepath
 
 dir.create("P:/FolloForest2021/FolloForest_ManualAcousticAnalysis/MYOMYO/WAV")
@@ -1204,9 +1413,14 @@ file.copy(from = MYOMYO.filepaths,
  beep() # that worked! 
 
 ################################################################################
+################################################################################
+################################################################################
+################################################################################
+ 
  ### Start here 
  # MYOMYS
-MYOMYS <- FF2 %>% dplyr::filter(autoid == "MYOMYS") #240 batpasses 
+MYOMYS <- FF2 %>% dplyr::filter(autoid == "MYOMYS") #16714 batpasses 
+# write.csv(MYOMYS, "P:/FolloForest2021/FolloForest_ManualAcousticAnalysis/MYOMYS/MYOMYS_meta.csv")
 MYOMYS.filepaths <- MYOMYS$fullfilepath
 
 dir.create("P:/FolloForest2021/FolloForest_ManualAcousticAnalysis/MYOMYS/WAV")
@@ -1214,12 +1428,76 @@ dir.create("P:/FolloForest2021/FolloForest_ManualAcousticAnalysis/MYOMYS/WAV")
 # # Copy files that match the file paths into a new folder. 
 file.copy(from = MYOMYS.filepaths,
            to = "P:/FolloForest2021/FolloForest_ManualAcousticAnalysis/MYOMYS/WAV")
- beep() # that worked! 
+ beep() # 
+ 
+ 
+ ################################################################################
+# 16714 / 4 = 4178.5
+# This is more manageable 
 
+ ## Need to break this into multiple subdirectories. 
+ 
+ # Create 5 sub-directories within MYOBRA with 4178 (ish) files per folder 
+ 
+# for (i in 1:4) {
+#     newdir <- paste0("P:/FolloForest2021/FolloForest_ManualAcousticAnalysis/MYOMYS/WAV",i)
+#     dir.create(newdir) } # that worked!
+ 
+ ## Copy 2147 files from the WAV folder into each sub directory 
+ 
+MYOMYS_wav<-  list.files("P:/FolloForest2021/FolloForest_ManualAcousticAnalysis/MYOMYS/WAV",)
+beep()
+
+MYOMYS_df <- as.data.frame(MYOMYS_wav)
+
+ ################################################################################
+
+MYOMYS1 <- MYOMYS_df[1:4178,]
+
+file.copy(from = paste0(
+  "P:/FolloForest2021/FolloForest_ManualAcousticAnalysis/MYOMYS/WAV/", MYOMYS1),
+           to = 
+            "P:/FolloForest2021/FolloForest_ManualAcousticAnalysis/MYOMYS/WAV1")
+beep()
+
+ ################################################################################
+
+MYOMYS2 <- MYOMYS_df[4178:8356,]
+
+file.copy(from = paste0(
+  "P:/FolloForest2021/FolloForest_ManualAcousticAnalysis/MYOMYS/WAV/", MYOMYS2),
+           to = 
+            "P:/FolloForest2021/FolloForest_ManualAcousticAnalysis/MYOMYS/WAV2")
+beep()
+
+ ################################################################################
+
+MYOMYS3 <- MYOMYS_df[8357:12534,]
+
+file.copy(from = paste0(
+  "P:/FolloForest2021/FolloForest_ManualAcousticAnalysis/MYOMYS/WAV/", MYOMYS3),
+           to = 
+            "P:/FolloForest2021/FolloForest_ManualAcousticAnalysis/MYOMYS/WAV3")
+beep()
+
+################################################################################
+
+MYOMYS4 <- MYOMYS_df[12535:16714,]
+
+file.copy(from = paste0(
+  "P:/FolloForest2021/FolloForest_ManualAcousticAnalysis/MYOMYS/WAV/", MYOMYS4),
+           to = 
+            "P:/FolloForest2021/FolloForest_ManualAcousticAnalysis/MYOMYS/WAV4")
+beep()
+
+################################################################################
+################################################################################
+################################################################################
 ################################################################################
  
  # MYONAT
-MYONAT <- FF2 %>% dplyr::filter(autoid == "MYONAT") #240 batpasses 
+MYONAT <- FF2 %>% dplyr::filter(autoid == "MYONAT") #627 batpasses 
+write.csv(MYONAT, "P:/FolloForest2021/FolloForest_ManualAcousticAnalysis/MYONAT/MYONAT_meta.csv")
 MYONAT.filepaths <- MYONAT$fullfilepath
 
 dir.create("P:/FolloForest2021/FolloForest_ManualAcousticAnalysis/MYONAT/WAV")
@@ -1232,7 +1510,8 @@ file.copy(from = MYONAT.filepaths,
 ################################################################################
  
  # PLEAUR
-PLEAUR <- FF2 %>% dplyr::filter(autoid == "PLEAUR") #240 batpasses 
+PLEAUR <- FF2 %>% dplyr::filter(autoid == "PLEAUR") #5448 bat passes 
+write.csv(PLEAUR, "P:/FolloForest2021/FolloForest_ManualAcousticAnalysis/PLEAUR/PLEAUR_meta.csv")
 PLEAUR.filepaths <- PLEAUR$fullfilepath
 
 dir.create("P:/FolloForest2021/FolloForest_ManualAcousticAnalysis/PLEAUR/WAV")
@@ -1243,9 +1522,11 @@ file.copy(from = PLEAUR.filepaths,
  beep() # that worked! 
 
 ################################################################################
+
  
  # PLEAUS
-PLEAUS <- FF2 %>% dplyr::filter(autoid == "PLEAUS") #240 batpasses 
+PLEAUS <- FF2 %>% dplyr::filter(autoid == "PLEAUS") #1928 batpasses 
+ write.csv(PLEAUS, "P:/FolloForest2021/FolloForest_ManualAcousticAnalysis/PLEAUS/PLEAUS_meta.csv")
 PLEAUS.filepaths <- PLEAUS$fullfilepath
 
 dir.create("P:/FolloForest2021/FolloForest_ManualAcousticAnalysis/PLEAUS/WAV")
@@ -1254,6 +1535,8 @@ dir.create("P:/FolloForest2021/FolloForest_ManualAcousticAnalysis/PLEAUS/WAV")
 file.copy(from = PLEAUS.filepaths,
            to = "P:/FolloForest2021/FolloForest_ManualAcousticAnalysis/PLEAUS/WAV")
  beep() # that worked! 
+ 
+ 
 
 ################################################################################
 
