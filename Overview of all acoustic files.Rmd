@@ -375,141 +375,12 @@ summary(FF$autoid)
 
 ```
 
-## Approach 1 - subsetting 
-
-1. Manually ID all SRE bat passes (Myotis species, Plecotus species, Barbastelles) and then a random selection of 1000 passes from the other AUTOIDs across all sites (also randomly selected): 
-```{r}
-
-# # I am showing how the subset was done but the final dataset is read in as csv file at the end. 
 
 
+## Approach 4 subsetting 
+(previous approaches in found in version control)
 
-# 
-# ff <- FF %>% filter(autoid %in% c("BARBAR", "MYOALC", "MYOBEC",
-#                      "MYOBRA", "MYODAS", "MYODAU",
-#                      "MYOMYO", "MYOMYS", "MYONAT",
-#                      "PLEAUS", "PLEAUR")) %>% droplevels()
-# 
-# ## Random selection of 1000 each of the other bat species
-# 
-# # EPTNIL
-# sub_EPTNIL1 <- FF %>% dplyr::filter(autoid == "EPTNIL") %>%
-#   droplevels() %>%
-#   slice_sample(n = 1000)
-# 
-# #############################################################
-# 
-# # EPTSER
-# sub_EPTSER1 <- FF %>% dplyr::filter(autoid == "EPTSER") %>%
-#   droplevels() %>%
-#   slice_sample(n = 1000)
-# 
-# #############################################################
-# 
-# # NYCLEI
-# sub_NYCLEI1 <- FF %>% dplyr::filter(autoid == "NYCLEI") %>%
-#   droplevels() %>%
-#   slice_sample(n = 1000)
-# 
-# #############################################################
-# 
-# # NYCNOC
-# sub_NYCNOC1 <- FF %>% dplyr::filter(autoid == "NYCNOC") %>%
-#   droplevels() %>%
-#   slice_sample(n = 1000)
-# 
-# #############################################################
-# 
-# # NoID
-# sub_NoID1 <- FF %>% dplyr::filter(autoid == "NoID") %>%
-#   droplevels() %>%
-#   slice_sample(n = 1000)
-# 
-# #############################################################
-# 
-# # PIPNAT
-# sub_PIPNAT1 <- FF %>% dplyr::filter(autoid == "PIPNAT") %>%
-#   droplevels() %>%
-#   slice_sample(n = 1000)
-# 
-# #############################################################
-# 
-# # PIPPIP
-# sub_PIPPIP1 <- FF %>% dplyr::filter(autoid == "PIPPIP") %>%
-#   droplevels() %>%
-#   slice_sample(n = 1000)
-# 
-# #############################################################
-# 
-# # PIPPYG
-# sub_PIPPYG1 <- FF %>% dplyr::filter(autoid == "PIPPYG") %>%
-#   droplevels() %>%
-#   slice_sample(n = 1000)
-# 
-# #############################################################
-# 
-# # PLEAUR
-# sub_PLEAUR1 <- FF %>% dplyr::filter(autoid == "PLEAUR") %>%
-#   droplevels() %>%
-#   slice_sample(n = 1000)
-# 
-# #############################################################
-# 
-# # PLEAUS
-# sub_PLEAUS1 <- FF %>% dplyr::filter(autoid == "PLEAUS") %>%
-#   droplevels() %>%
-#   slice_sample(n = 1000)
-# 
-# #############################################################
-# 
-# # VESMUR
-# sub_VESMUR1 <- FF %>% dplyr::filter(autoid == "VESMUR") %>%
-#   droplevels() %>%
-#   slice_sample(n = 1000)
-# 
-# #############################################################
-# # Now merge together
-# ##### ALTERNATIVE 2 #####
-# df_list. <- list(sub_EPTNIL1, sub_EPTSER1, sub_NYCLEI1, sub_NYCNOC1,
-#                 sub_NoID1, sub_PIPNAT1, sub_PIPPIP1, sub_PIPPYG1,
-#                 sub_PLEAUR1, sub_PLEAUS1, sub_VESMUR1)
-# 
-# big_sub. <- df_list. %>% reduce(full_join)
-# 
-# 
-# alt1 <- full_join(ff, big_sub.)
-# dim(alt1)
-# # [1] 88849      17
-# 
-# dim(alt1) / dim(FF) # 21% of total bat passes
-# 
-# write.csv(alt1, file= file.path(output_today, "alternative_subset1.csv"))
-# output_today
-# "C:/Users/apmc/OneDrive - Norwegian University of Life Sciences/3. Follo Forest 2021-2023/Manuscripts/Analyses/Outputs/SummarizingBatAcousticData_2023-10-12"
-
-alt1 <- read_csv("C:/Users/apmc/OneDrive - Norwegian University of Life Sciences/3. Follo Forest 2021-2023/Manuscripts/Analyses/Outputs/SummarizingBatAcousticData_2023-10-12/alternative_subset1.csv",
-     col_types = cols(...1 = col_skip()))
-dim(alt1)
-# 88849    17
-
-# format columns 
-alt1 <- alt1 %>% dplyr:: mutate(Site = factor(Site), 
-                            SitePlot = factor(SitePlot),
-                            Plot = factor(Plot), 
-                            Collection = factor(Collection),
-                            year = factor(year), 
-                            autoid = factor(autoid))
-
-
-```
-
-
-
-
-## Approach 2 and 3 - subsetting 
-2. Manually ID all SRE bat passes (Myotis species, Plecotus species, Barbastelles) and subset the rest of the data to include at least one file per taxon per site and per night (method found in this study: https://www.nature.com/articles/s41598-021-89660-z) 
-
-3. Manually ID all SRE bat passes (Myotis species, Plecotus species, Barbastelles) *AND NoID* and subset the rest of the data to include at least one file per taxon per site and per night (method found in this study: https://www.nature.com/articles/s41598-021-89660-z) 
+4. Manually ID all SRE bat passes (Myotis species, Plecotus species, Barbastelles) *AND 2000 NoIDs from each plot type* and subset the rest of the data to include at least one file per taxon per site and per night (method found in this study: https://www.nature.com/articles/s41598-021-89660-z) 
  
 ```{r}
 
@@ -805,15 +676,6 @@ alt2 <- alt2 %>% dplyr:: mutate(Site = factor(Site),
                             autoid = factor(autoid))
 
 
-#alt3 <- alt3 %>% dplyr:: mutate(Site = factor(Site), 
-                            # SitePlot = factor(SitePlot),
-                            # Plot = factor(Plot), 
-                            # Collection = factor(Collection),
-                            # year = factor(year), 
-                            # autoid = factor(autoid))
-
-#### alt 4 
-#### Final alternative: this is the same as alt2 but NoIDS are subsetted differently. 
 
 alt2.5 <- alt2 %>% dplyr::filter(autoid != "NoID") 
 
@@ -844,138 +706,6 @@ dim(alt4) # 103874
 
 ```
  
-### Visualize to compare 
-
-!Note!
-FF05-CB-2021 was removed from the field in early June / nearly mid season
-There are other equipment failures later in the season both years due to microphones losing sensitivity
-
-
-```{r}
-### Note! 'alt' data objects represent the subsets of data that could be checked wiht manual analysis - not what the final complete dataset would look like. 
-
-# - Comparing temporal spread of the data for each siteplot: 
-
-FF2021 <- FF %>% 
-  filter(year == "2021") %>% droplevels %>% ggplot() + 
-  geom_point(aes(x=DATE.12, color = Plot), stat = "count") +
-  facet_wrap(siteplotyear ~ Plot) + xlab("")
-FF2021  + ggtitle("raw - 2021")
-
-FF2022 <- FF %>% 
-  filter(year == "2022") %>% droplevels %>% ggplot() + 
-  geom_point(aes(x=DATE.12, color = Plot), stat = "count") +
-  facet_wrap(siteplotyear ~ Plot) + xlab("")
-FF2022 + ggtitle("raw - 2022")
-
-
-
-
-alt12021 <- alt1 %>% 
-  filter(year == "2021") %>% droplevels %>% ggplot() + 
-  geom_point(aes(x=DATE.12, color = Plot), stat = "count") +
-  facet_wrap(siteplotyear ~ Plot) + xlab("") + ggtitle("alt1 - 2021")
-alt12021  
-
-alt12022 <- alt1 %>% 
-  filter(year == "2022") %>% droplevels %>% ggplot() + 
-  geom_point(aes(x=DATE.12, color = Plot), stat = "count") +
-  facet_wrap(siteplotyear ~ Plot) + xlab("") + ggtitle("alt1 - 2022")
-alt12022 
-
-
-
-alt22021 <- alt2 %>% 
-  filter(year == "2021") %>% droplevels %>% ggplot() + 
-  geom_point(aes(x=DATE.12, color = Plot), stat = "count") +
-  facet_wrap(siteplotyear ~ Plot) + xlab("") + ggtitle("alt2 - 2021")
-alt22021  
-
-alt22022 <- alt2 %>% 
-  filter(year == "2022") %>% droplevels %>% ggplot() + 
-  geom_point(aes(x=DATE.12, color = Plot), stat = "count") +
-  facet_wrap(siteplotyear ~ Plot) + xlab("") + ggtitle("alt2 - 2022")
-alt22022 
-
-
-
-alt32021 <- alt3 %>% 
-  filter(year == "2021") %>% droplevels %>% ggplot() + 
-  geom_point(aes(x=DATE.12, color = Plot), stat = "count") +
-  facet_wrap(siteplotyear ~ Plot) + xlab("") + ggtitle("alt3 - 2021")
-alt32021  
-
-alt32022 <- alt3 %>% 
-  filter(year == "2022") %>% droplevels %>% ggplot() + 
-  geom_point(aes(x=DATE.12, color = Plot), stat = "count") +
-  facet_wrap(siteplotyear ~ Plot) + xlab("") + ggtitle("alt3 - 2022")
-alt32022 
-
-
-###################################################
-# Compare  how autoids are distributed 
-
-
-bff21 <-  FF %>% 
-  filter(year == "2021") %>% droplevels %>% ggplot() + 
-  geom_bar(aes(x=siteplotyear, fill = autoid), stat = "count", position = "fill") +
-  coord_flip() + ggtitle("raw - 2021")
-bff21
-
-bff22 <-  FF %>% 
-  filter(year == "2022") %>% droplevels %>% ggplot() + 
-  geom_bar(aes(x=siteplotyear, fill = autoid), stat = "count", position = "fill") +
-  coord_flip() + ggtitle("raw - 2022")
-bff22
-
-
-
-
-ba121 <-  alt1 %>% 
-  filter(year == "2021") %>% droplevels %>% ggplot() + 
-  geom_bar(aes(x=siteplotyear, fill = autoid), stat = "count", position = "fill") +
-  coord_flip() + ggtitle("alt1 - 2021")
-ba121
-
-ba122 <-  alt1 %>% 
-  filter(year == "2022") %>% droplevels %>% ggplot() + 
-  geom_bar(aes(x=siteplotyear, fill = autoid), stat = "count", position = "fill") +
-  coord_flip() + ggtitle("alt1 - 2022")
-ba122
-
-
-
-ba221 <-  alt2 %>% 
-  filter(year == "2021") %>% droplevels %>% ggplot() + 
-  geom_bar(aes(x=siteplotyear, fill = autoid), stat = "count", position = "fill") +
-  coord_flip() + ggtitle("alt2 - 2021")
-ba221
-
-ba222 <-  alt2 %>% 
-  filter(year == "2022") %>% droplevels %>% ggplot() + 
-  geom_bar(aes(x=siteplotyear, fill = autoid), stat = "count", position = "fill") +
-  coord_flip() + ggtitle("alt2 - 2022")
-ba222
-
-
-
-ba321 <-  alt3 %>% 
-  filter(year == "2021") %>% droplevels %>% ggplot() + 
-  geom_bar(aes(x=siteplotyear, fill = autoid), stat = "count", position = "fill") +
-  coord_flip() + ggtitle("alt3 - 2021")
-ba321
-
-ba322 <-  alt3 %>% 
-  filter(year == "2022") %>% droplevels %>% ggplot() + 
-  geom_bar(aes(x=siteplotyear, fill = autoid), stat = "count", position = "fill") +
-  coord_flip() + ggtitle("alt3 - 2021")
-ba322
-
-
-
-summary(alt2)
-
-```
 
 # Check for inconsistencies with the filepaths 
 ```{r}
@@ -1111,6 +841,17 @@ autoids
 
 
 # Export all the SRE bats first 
+
+##!!## Remove Files already manually processed from Mathilde's thesis ##!!##
+# Mathilde's dataset 
+mkt <- read_csv("P:/FolloForest2021/FolloForest2022/Acoustics_Subsets/MathildeKTholme/OB/FinalManualIDOutput_MKT_24022023.csv",
+     col_types = cols(...1 = col_skip()))
+dim(mkt)
+# 19811    51
+names(mkt)
+
+mkt_files <- unique(mkt$file.name) # 19001 unique files- 
+
 FF2 <- FF1 %>% filter(autoid %in% c("BARBAR", "MYOALC", "MYOBEC",
                      "MYOBRA", "MYODAS", "MYODAU",
                      "MYOMYO", "MYOMYS", "MYONAT",
@@ -1535,7 +1276,6 @@ dir.create("P:/FolloForest2021/FolloForest_ManualAcousticAnalysis/PLEAUS/WAV")
 file.copy(from = PLEAUS.filepaths,
            to = "P:/FolloForest2021/FolloForest_ManualAcousticAnalysis/PLEAUS/WAV")
  beep() # that worked! 
- 
  
 
 ################################################################################
