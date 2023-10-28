@@ -48,7 +48,7 @@ output_today
 # "C:/Users/apmc/OneDrive - Norwegian University of Life Sciences/3. Follo Forest 2021-2023/Manuscripts/Analyses/Outputs/ExtractingSREBatAcousticData_2023-10-13"
 
 # Mathilde's dataset 
-mkt <- read_csv("P:/FolloForest2021/FolloForest2022/Acoustics/MathildeKTholme/OB/FinalManualIDOutput_MKT_24022023.csv",
+mkt <- read_csv("P:/FolloForest2021/FolloForest2022/Acoustics_Subsets/MathildeKTholme/OB/FinalManualIDOutput_MKT_24022023.csv",
      col_types = cols(...1 = col_skip()))
 dim(mkt)
 # 19811    51

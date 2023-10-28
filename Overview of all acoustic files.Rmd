@@ -1060,6 +1060,7 @@ write.csv(sub_MYOBRA, "P:/FolloForest2021/FolloForest_ManualAcousticAnalysis/MYO
 
 # 16549/3 # 5516.333, that'll do 
 # 5516, 11032, 16549
+5516/2
 
 # for (i in 1:3) {
 #     newdir <- paste0("P:/FolloForest2021/FolloForest_ManualAcousticAnalysis/MYOBRA/subset1/WAV",i)
@@ -1578,13 +1579,18 @@ EPTNIL <- alt4.2 %>% dplyr::filter(autoid == "EPTNIL") # 5302 batpasses
 write.csv(EPTNIL, "P:/FolloForest2021/FolloForest_ManualAcousticAnalysis/EPTNIL/EPTNIL_meta.csv")
 EPTNIL.filepaths <- EPTNIL$fullfilepath
 
+EPTNIL$siteplotyear <- as.factor(EPTNIL$siteplotyear)
+
 dir.create("P:/FolloForest2021/FolloForest_ManualAcousticAnalysis/EPTNIL/WAV")
 
 # # Copy files that match the file paths into a new folder. 
 file.copy(from = EPTNIL.filepaths,
            to = "P:/FolloForest2021/FolloForest_ManualAcousticAnalysis/EPTNIL/WAV")
- beep() # that worked! 
-
+ beep() # that worked!
+ 
+ # Check that this worked the way you thought it would 
+ #test <- list.files("P:/FolloForest2021/FolloForest_ManualAcousticAnalysis/EPTNIL/WAV")
+ #looks good! 
 ################################################################################
 ################################################################################
 
