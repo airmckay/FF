@@ -988,10 +988,10 @@ dim(MYOBRA)
 #  
 #  ## Copy 2147 files from the WAV folder into each sub directory 
  
-MYOBRA_wav<-  list.files("P:/FolloForest2021/FolloForest_ManualAcousticAnalysis/MYOBRA/WAV",)
-beep()
-
-MYOBRA_df <- as.data.frame(MYOBRA_wav)
+# MYOBRA_wav<-  list.files("P:/FolloForest2021/FolloForest_ManualAcousticAnalysis/MYOBRA/WAV",)
+# beep()
+# 
+# MYOBRA_df <- as.data.frame(MYOBRA_wav)
 
  ################################################################################
 
@@ -1060,7 +1060,7 @@ write.csv(sub_MYOBRA, "P:/FolloForest2021/FolloForest_ManualAcousticAnalysis/MYO
 
 # 16549/3 # 5516.333, that'll do 
 # 5516, 11032, 16549
-5516/2
+
 
 # for (i in 1:3) {
 #     newdir <- paste0("P:/FolloForest2021/FolloForest_ManualAcousticAnalysis/MYOBRA/subset1/WAV",i)
@@ -1081,11 +1081,10 @@ write.csv(sub_MYOBRA, "P:/FolloForest2021/FolloForest_ManualAcousticAnalysis/MYO
 #            to = "P:/FolloForest2021/FolloForest_ManualAcousticAnalysis/MYOBRA/subset1/WAV2")
 #  beep() # that worked!
 
-
- sub_MYOBRA3 <- MYOBRA_df[11033:16549,]
-file.copy(from = sub_MYOBRA3,
-           to = "P:/FolloForest2021/FolloForest_ManualAcousticAnalysis/MYOBRA/subset1/WAV3")
- beep() # that worked!
+#  sub_MYOBRA3 <- MYOBRA_df[11033:16549,]
+# file.copy(from = sub_MYOBRA3,
+#            to = "P:/FolloForest2021/FolloForest_ManualAcousticAnalysis/MYOBRA/subset1/WAV3")
+#  beep() # that worked!
 
 ################################################################################
 ################################################################################
@@ -1746,5 +1745,36 @@ file.copy(from = NoIDOB.filepaths,
  
  
  
+```
+
+
+### Quality control check to see if the manual acoustic analyis is running the way I expected. 
+```{r}
+meta <- read_csv("P:/FolloForest2021/FolloForest_ManualAcousticAnalysis/MYOBRA/subset1/ID1/meta.csv")
+meta2 <- read_csv("P:/FolloForest2021/FolloForest_ManualAcousticAnalysis/MYOBRA/subset1/ID2/meta.csv")
+meta3 <- read_csv("P:/FolloForest2021/FolloForest_ManualAcousticAnalysis/MYOBRA/subset1/ID3/meta.csv")
+
+## combine these 
+
+met1 <- full_join(meta, meta2)
+myobra <- full_join(met1, meta3) 
+
+dim(myobra) #16549 
+dim(sub_MYOBRA) #16549 - good. 
+dim(mkt_MYOBRA) # 3646    1 (none of these should be in the other datasets)
+dim(MYOBRA) # 20195    20 (together the sub and the mkt should add up to this) 
+
+names(myobra)
+
+test <- unique(myobra$`IN FILE`) # all distinct files. Thank goodness. 
+
+# Do any of these maatch wath was found in the mkt dataset? 
+myobra1$filename <- myobra1[,1]
+test1 <- full_join(myobra1, mkt_MYOBRA) # 20195    20 - good! 
+# are these all unique files? 
+
+test2 <- unique(test1$filename)
+# 20195 elements - nice! 
+
 ```
 
