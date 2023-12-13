@@ -641,14 +641,103 @@ summary(df5$behavior)
 
 ## Create a year column 
 df6 <- df5 %>% mutate(year = case_when(
-  str_detect(DATE, "2021") ~ "2021",
-  str_detect(DATE, "2022") ~ "2022")) %>% 
+  str_detect(file.name, "2021") ~ "2021",
+  str_detect(file.name, "2022") ~ "2022")) %>% 
   mutate(year = factor(year)) 
 
 table(df6$year)
 #  2021  2022 
-# 47028 37845
+# 50018 39161 
 
+
+## Now add in mkt data 
+
+mkt1 <- mkt %>% select(c(INDIR, file.name, DATE, TIME, HOUR,
+                         DATE.12, TIME.12, HOUR.12, AUTO.ID, 
+                         MATCH.RATIO, manualid_clean, behavior, 
+                         SitePlot, PlotType)) %>% 
+  rename(manualid = manualid_clean) %>% ungroup()
+
+mkt1$year <- "2021"
+mkt1$year <- as.factor(mkt1$year)
+
+summary(mkt1)
+
+# metaplot <- mkt %>% distinct(Site, SitePlot)
+# metaplot1 <- data.frame(c("FF12", "FF12", "FF12"), c("FF12-IB", "FF12-OB", "FF12-OB"))
+# names(metaplot1) <- c("Site", "SitePlot")
+# metaplot2 <- rbind(metaplot, metaplot1)
+
+# create the site and siteplot folders 
+
+detectors <- read_excel("C:/Users/apmc/OneDrive - Norwegian University of Life Sciences/3. Follo Forest 2021-2023/Manuscripts/Analyses/Inputs/detector_overview_2021_2022 - Copy.xlsx")
+
+names(detectors)
+# "Site ID"  "Detector" "year"
+
+df6 <- df6 %>% dplyr::mutate(Detector =substr(file.name, 1,8)) 
+
+### FIX THE VEMUROOFTOP HERE! 
+df6$detector.year <- paste0(df6$Detector, "_", df6$year)
+
+## There is some missing data but I can only address some of it for now 
+
+
+
+
+detectors$detector.year <- paste0(detectors$Detector, "_", detectors$year)
+
+detectors1 <- detectors %>% select(c(`Site ID`, detector.year))
+
+df7 <- left_join(df6, detectors1)
+
+
+
+
+df7$SiteID <- df7$`Site ID`
+
+df8 <- df7 %>% mutate(SitePlot = SiteID) %>% 
+  mutate(PlotType = case_when(
+  str_detect(SitePlot, "-OB") ~ "Open",
+  str_detect(SitePlot, "-CB") ~ "Canopy", 
+  str_detect(SitePlot, "-IB") ~ "Interior")) %>% 
+  mutate(SitePlot = factor(SitePlot))
+
+df9 <- df8 %>% select(c(INDIR, file.name, DATE, TIME, HOUR,
+                         DATE.12, TIME.12, HOUR.12, AUTO.ID, 
+                         MATCH.RATIO, manualid, behavior, SitePlot, PlotType, year))
+
+df9$DATE <- as.Date(df9$DATE)
+df9$DATE.12 <- as.Date(df9$DATE.12)
+mkt1$TIME <- as.character(mkt1$TIME)
+mkt1$TIME.12 <- as.character(mkt1$TIME.12)
+
+dim(mkt1) # 19811    15
+dim(df9) # 89179    15
+# 89179 + 19811 = 108990 - good! 
+
+df10 <- full_join(df9, mkt1) #108990     16
+dim(df10)
+
+
+
+## CHeck for duplicates
+mktest <- mkt1 %>% select(file.name) %>% distinct()
+dftest <- df9 %>% select(file.name) %>% distinct() 
+
+test <- inner_join(mktest, dftest)
+# 1 S4U11994_20220630_022005_000.wav
+
+dup <- df9 %>% filter(file.name == "S4U11994_20220630_022005_000.wav")
+dup1 <- mkt %>% filter(file.name == "S4U11994_20220630_022005_000.wav") # one duplicate that should be removed. 
+# the manual ID is in agreement 
+
+addthis <- df9 %>% filter(file.name == "S4U11994_20220630_022005_000.wav")
+
+df11 <- df10 %>% subset(file.name !=  "S4U11994_20220630_022005_000.wav")
+df12 <- full_join(df10, addthis)
+
+metaplot <- df9 %>% 
 
 ```
 
