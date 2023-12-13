@@ -1,0 +1,654 @@
+---
+title: "CompilingManualID_Dec2023"
+output: html_document
+date: "2023-12-13"
+---
+
+```{r}
+library(data.table)
+library(tidyverse)
+library(beepr)
+library(lubridate)
+library(purrr)
+library(janitor)
+#renv::install("rstudio/renv")
+library(renv)
+library(stringr)
+library(beepr)
+
+## Setup output directory 
+output <- "C:/Users/apmc/OneDrive - Norwegian University of Life Sciences/3. Follo Forest 2021-2023/Manuscripts/Analyses/Outputs"
+
+file.name <- "CombiningManualAcousticAnalysis"
+
+todays_date <- Sys.Date()
+ 
+dir.name <- str_c(output,"/", file.name, "_", todays_date)
+dir.name
+ 
+output_today <- dir.name
+output_today
+
+dir.create(output_today)
+output_today
+#"C:/Users/apmc/OneDrive - Norwegian University of Life Sciences/3. Follo Forest 2021-2023/Manuscripts/Analyses/Outputs/CombiningManualAcousticAnalysis_2023-12-13"
+
+# For later 
+mkt <- read_csv("P:/FolloForest2021/FolloForest2022/Acoustics_Subsets/MathildeKTholme/OB/FinalManualIDOutput_MKT_24022023.csv",
+     col_types = cols(...1 = col_skip()))
+dim(mkt)
+names(mkt)
+mkt$manualid_clean <- factor(mkt$manualid_clean)
+levels(mkt$manualid_clean)
+table(mkt$manualid_clean)
+# 19811 
+
+```
+
+
+```{r}
+# folders where csv files are all in for each site
+    #  / for /          
+
+input_BARBAR <-"P:/FolloForest2021/FolloForest_ManualAcousticAnalysis/BARBAR/subset1/ID" 
+
+input_EPTNIL <-"P:/FolloForest2021/FolloForest_ManualAcousticAnalysis/EPTNIL/ID_True"
+
+input_EPTSER <-"P:/FolloForest2021/FolloForest_ManualAcousticAnalysis/EPTSER/ID"
+
+input_MYOALC <-"P:/FolloForest2021/FolloForest_ManualAcousticAnalysis/MYOALC/subset1/ID"
+
+input_MYOBEC <- "P:/FolloForest2021/FolloForest_ManualAcousticAnalysis/MYOBEC/subset1/ID"
+
+input_MYOBRA1 <- "P:/FolloForest2021/FolloForest_ManualAcousticAnalysis/MYOBRA/subset1/ID1"
+input_MYOBRA2 <- "P:/FolloForest2021/FolloForest_ManualAcousticAnalysis/MYOBRA/subset1/ID2"
+input_MYOBRA3 <- "P:/FolloForest2021/FolloForest_ManualAcousticAnalysis/MYOBRA/subset1/ID3"
+
+input_MYODAS <- "P:/FolloForest2021/FolloForest_ManualAcousticAnalysis/MYODAS/subset1/ID"
+
+input_MYODAU1 <- "P:/FolloForest2021/FolloForest_ManualAcousticAnalysis/MYODAU/subset1/ID1"
+input_MYODAU2 <- "P:/FolloForest2021/FolloForest_ManualAcousticAnalysis/MYODAU/subset1/ID2"
+input_MYODAU3 <- "P:/FolloForest2021/FolloForest_ManualAcousticAnalysis/MYODAU/subset1/ID3"
+input_MYODAU4 <- "P:/FolloForest2021/FolloForest_ManualAcousticAnalysis/MYODAU/subset1/ID4"
+
+input_MYOMYO <- "P:/FolloForest2021/FolloForest_ManualAcousticAnalysis/MYOMYO/subset1/ID"
+
+input_MYOMYS1 <- "P:/FolloForest2021/FolloForest_ManualAcousticAnalysis/MYOMYS/subset1/ID1"
+input_MYOMYS2 <- "P:/FolloForest2021/FolloForest_ManualAcousticAnalysis/MYOMYS/subset1/ID2"
+
+input_MYONAT <- "P:/FolloForest2021/FolloForest_ManualAcousticAnalysis/MYONAT/subset1/ID"
+
+input_NoIDCB <- "P:/FolloForest2021/FolloForest_ManualAcousticAnalysis/NoID/NoIDCB/ID"
+input_NoIDIB <- "P:/FolloForest2021/FolloForest_ManualAcousticAnalysis/NoID/NoIDIB/ID"
+input_NoIDOB <- "P:/FolloForest2021/FolloForest_ManualAcousticAnalysis/NoID/NoIDOB/ID"
+
+input_NYCLEI <- "P:/FolloForest2021/FolloForest_ManualAcousticAnalysis/NYCLEI/ID"
+
+input_NYCNOC <- "P:/FolloForest2021/FolloForest_ManualAcousticAnalysis/NYCNOC/ID"
+
+input_PIPNAT <- "P:/FolloForest2021/FolloForest_ManualAcousticAnalysis/PIPNAT/ID"
+
+input_PIPPIP <- "P:/FolloForest2021/FolloForest_ManualAcousticAnalysis/PIPPIP/ID"
+
+input_PIPPYG<- "P:/FolloForest2021/FolloForest_ManualAcousticAnalysis/PIPPYG/ID"
+
+input_PLEAUR<- "P:/FolloForest2021/FolloForest_ManualAcousticAnalysis/PLEAUR/subset1/ID"
+
+input_PLEAUS<- "P:/FolloForest2021/FolloForest_ManualAcousticAnalysis/PLEAUS/subset1/ID"
+
+input_VESMUR<- "P:/FolloForest2021/FolloForest_ManualAcousticAnalysis/VESMUR/ID"
+
+```
+
+BARBAR
+
+EPTNIL
+
+EPTSER
+
+MYOALC
+
+MYOBEC
+
+MYOBRA1
+MYOBRA2
+MYOBRA3
+
+MYODAS
+
+MYODAU1
+MYODAU2
+MYODAU3
+MYODAU4
+
+MYOMYO
+
+MYOMYS1
+MYOMYS2
+
+MYONAT
+
+NoIDCB
+NoIDIB
+NoIDOB
+
+NYCLEI
+
+NYCNOC
+
+PIPNAT
+
+PIPPIP
+
+PIPPYG
+
+PLEAUR
+
+PLEAUS
+
+VESMUR
+
+
+```{r}
+### Pull the id.csv files 
+BARBAR <- list.files(path=input_BARBAR, pattern="meta.csv", recursive = TRUE)
+
+EPTNIL <- list.files(path=input_EPTNIL, pattern="meta.csv", recursive = TRUE)
+EPTNILdf <- as_tibble(EPTNIL) # remove a backup 
+EPTNIL <- EPTNILdf[1,]
+EPTNIL <- EPTNIL$value
+# 
+EPTSER <- list.files(path=input_EPTSER, pattern="meta.csv", recursive = TRUE)
+# 
+MYOALC <- list.files(path=input_MYOALC, pattern="meta.csv", recursive = TRUE)
+# 
+MYOBEC <- list.files(path=input_MYOBEC, pattern="meta.csv", recursive = TRUE)
+# 
+MYOBRA1 <- list.files(path=input_MYOBRA1, pattern="meta.csv", recursive = TRUE)
+MYOBRA2 <- list.files(path=input_MYOBRA2, pattern="meta.csv", recursive = TRUE)
+MYOBRA3 <- list.files(path=input_MYOBRA3, pattern="meta.csv", recursive = TRUE)
+# 
+MYODAS  <- list.files(path=input_MYODAS, pattern="meta.csv", recursive = TRUE)
+# 
+MYODAU1 <- list.files(path=input_MYODAU1, pattern="meta.csv", recursive = TRUE)
+MYODAU2 <- list.files(path=input_MYODAU2, pattern="meta.csv", recursive = TRUE)
+MYODAU3 <- list.files(path=input_MYODAU3, pattern="meta.csv", recursive = TRUE)
+MYODAU4 <- list.files(path=input_MYODAU4, pattern="meta.csv", recursive = TRUE)
+# 
+MYOMYO <- list.files(path=input_MYOMYO, pattern="meta.csv", recursive = TRUE)
+# 
+MYOMYS1 <- list.files(path=input_MYOMYS1, pattern="meta.csv", recursive = TRUE)
+MYOMYS2 <- list.files(path=input_MYOMYS2, pattern="meta.csv", recursive = TRUE)
+# 
+MYONAT <- list.files(path=input_MYONAT, pattern="meta.csv", recursive = TRUE)
+# 
+NoIDCB <- list.files(path=input_NoIDCB, pattern="meta.csv", recursive = TRUE)
+NoIDIB <- list.files(path=input_NoIDIB, pattern="meta.csv", recursive = TRUE)
+NoIDOB <- list.files(path=input_NoIDOB, pattern="meta.csv", recursive = TRUE)
+# 
+NYCLEI <- list.files(path=input_NYCLEI, pattern="meta.csv", recursive = TRUE)
+# 
+NYCNOC <- list.files(path=input_NYCNOC, pattern="meta.csv", recursive = TRUE)
+# 
+PIPNAT <- list.files(path=input_PIPNAT, pattern="meta.csv", recursive = TRUE)
+# 
+PIPPIP <- list.files(path=input_PIPPIP, pattern="meta.csv", recursive = TRUE)
+
+PIPPYG <- list.files(path=input_PIPPYG, pattern="meta.csv", recursive = TRUE)
+
+PLEAUR <- list.files(path=input_PLEAUR, pattern="meta.csv", recursive = TRUE)
+
+PLEAUS <- list.files(path=input_PLEAUS, pattern="meta.csv", recursive = TRUE)
+
+VESMUR <- list.files(path=input_VESMUR, pattern="meta.csv", recursive = TRUE)
+
+```
+
+
+
+```{r}
+
+knitr::opts_chunk$set(
+    root.dir = setwd(rprojroot::find_rstudio_root_file(input_BARBAR)))
+getwd()
+
+BARBAR_data <- lapply(BARBAR, read.csv)
+# 
+# EPTNIL 
+knitr::opts_chunk$set(
+    root.dir = setwd(rprojroot::find_rstudio_root_file(input_EPTNIL)))
+getwd()
+
+EPTNIL_data <- lapply(EPTNIL, read.csv)
+# 
+# EPTSER
+knitr::opts_chunk$set(
+    root.dir = setwd(rprojroot::find_rstudio_root_file(input_EPTSER)))
+getwd()
+
+EPTSER_data <- lapply(EPTSER, read.csv)
+# 
+# MYOALC
+knitr::opts_chunk$set(
+    root.dir = setwd(rprojroot::find_rstudio_root_file(input_MYOALC)))
+getwd()
+
+MYOALC_data <- lapply(MYOALC, read.csv)
+
+# MYOBEC
+knitr::opts_chunk$set(
+    root.dir = setwd(rprojroot::find_rstudio_root_file(input_MYOBEC)))
+getwd()
+
+MYOBEC_data <- lapply(MYOBEC, read.csv)
+
+# MYOBRA1
+knitr::opts_chunk$set(
+    root.dir = setwd(rprojroot::find_rstudio_root_file(input_MYOBRA1)))
+getwd()
+
+MYOBRA1_data <- lapply(MYOBRA1, read.csv)
+# MYOBRA2
+knitr::opts_chunk$set(
+    root.dir = setwd(rprojroot::find_rstudio_root_file(input_MYOBRA2)))
+getwd()
+
+MYOBRA2_data <- lapply(MYOBRA2, read.csv)
+
+# MYOBRA3
+knitr::opts_chunk$set(
+    root.dir = setwd(rprojroot::find_rstudio_root_file(input_MYOBRA3)))
+getwd()
+
+MYOBRA3_data <- lapply(MYOBRA3, read.csv)
+# 
+# MYODAS
+knitr::opts_chunk$set(
+    root.dir = setwd(rprojroot::find_rstudio_root_file(input_MYODAS)))
+getwd()
+
+MYODAS_data <- lapply(MYODAS, read.csv)
+
+# MYODAU1
+knitr::opts_chunk$set(
+    root.dir = setwd(rprojroot::find_rstudio_root_file(input_MYODAU1)))
+getwd()
+
+MYODAU1_data <- lapply(MYODAU1, read.csv)
+
+# MYODAU2
+knitr::opts_chunk$set(
+    root.dir = setwd(rprojroot::find_rstudio_root_file(input_MYODAU2)))
+getwd()
+
+MYODAU2_data <- lapply(MYODAU2, read.csv)
+
+# MYODAU3
+knitr::opts_chunk$set(
+    root.dir = setwd(rprojroot::find_rstudio_root_file(input_MYODAU3)))
+getwd()
+
+MYODAU3_data <- lapply(MYODAU3, read.csv)
+
+# MYODAU4
+knitr::opts_chunk$set(
+    root.dir = setwd(rprojroot::find_rstudio_root_file(input_MYODAU4)))
+getwd()
+
+MYODAU4_data <- lapply(MYODAU4, read.csv)
+# 
+# MYOMYO
+knitr::opts_chunk$set(
+    root.dir = setwd(rprojroot::find_rstudio_root_file(input_MYOMYO)))
+getwd()
+
+MYOMYO_data <- lapply(MYOMYO, read.csv)
+# 
+# MYOMYS1
+knitr::opts_chunk$set(
+    root.dir = setwd(rprojroot::find_rstudio_root_file(input_MYOMYS1)))
+getwd()
+
+MYOMYS1_data <- lapply(MYOMYS1, read.csv)
+
+# MYOMYS2
+knitr::opts_chunk$set(
+    root.dir = setwd(rprojroot::find_rstudio_root_file(input_MYOMYS2)))
+getwd()
+
+MYOMYS2_data <- lapply(MYOMYS2, read.csv)
+
+# MYONAT
+knitr::opts_chunk$set(
+    root.dir = setwd(rprojroot::find_rstudio_root_file(input_MYONAT)))
+getwd()
+
+MYONAT_data <- lapply(MYONAT, read.csv)
+# 
+# NoIDCB
+knitr::opts_chunk$set(
+    root.dir = setwd(rprojroot::find_rstudio_root_file(input_NoIDCB)))
+getwd()
+
+NoIDCB_data <- lapply(NoIDCB, read.csv)
+
+# NoIDIB
+knitr::opts_chunk$set(
+    root.dir = setwd(rprojroot::find_rstudio_root_file(input_NoIDIB)))
+getwd()
+
+NoIDIB_data <- lapply(NoIDIB, read.csv)
+
+# NoIDOB
+knitr::opts_chunk$set(
+    root.dir = setwd(rprojroot::find_rstudio_root_file(input_NoIDOB)))
+getwd()
+
+NoIDOB_data <- lapply(NoIDOB, read.csv)
+# 
+# NYCLEI
+knitr::opts_chunk$set(
+    root.dir = setwd(rprojroot::find_rstudio_root_file(input_NYCLEI)))
+getwd()
+
+NYCLEI_data <- lapply(NYCLEI, read.csv)
+# 
+# NYCNOC
+knitr::opts_chunk$set(
+    root.dir = setwd(rprojroot::find_rstudio_root_file(input_NYCNOC)))
+getwd()
+
+NYCNOC_data <- lapply(NYCNOC, read.csv)
+# 
+# PIPNAT
+knitr::opts_chunk$set(
+    root.dir = setwd(rprojroot::find_rstudio_root_file(input_PIPNAT)))
+getwd()
+
+PIPNAT_data <- lapply(PIPNAT, read.csv)
+# 
+# PIPPIP
+knitr::opts_chunk$set(
+    root.dir = setwd(rprojroot::find_rstudio_root_file(input_PIPPIP)))
+getwd()
+
+PIPPIP_data <- lapply(PIPPIP, read.csv)
+# 
+# PIPPYG
+knitr::opts_chunk$set(
+    root.dir = setwd(rprojroot::find_rstudio_root_file(input_PIPPYG)))
+getwd()
+
+PIPPYG_data <- lapply(PIPPYG, read.csv)
+# 
+# PLEAUR
+knitr::opts_chunk$set(
+    root.dir = setwd(rprojroot::find_rstudio_root_file(input_PLEAUR)))
+getwd()
+
+PLEAUR_data <- lapply(PLEAUR, read.csv)
+# 
+# PLEAUS
+knitr::opts_chunk$set(
+    root.dir = setwd(rprojroot::find_rstudio_root_file(input_PLEAUS)))
+getwd()
+
+PLEAUS_data <- lapply(PLEAUS, read.csv)
+# 
+# VESMUR
+knitr::opts_chunk$set(
+    root.dir = setwd(rprojroot::find_rstudio_root_file(input_VESMUR)))
+getwd()
+
+VESMUR_data <- lapply(VESMUR, read.csv)
+
+```
+
+
+```{r}
+#To add the name of each csv in the list
+
+#BARBAR
+names(BARBAR_data) <- gsub("//.csv$", "", BARBAR)
+
+#EPTNIL
+names(EPTNIL_data) <- gsub("//.csv$", "", EPTNIL)
+
+#EPTSER
+names(EPTSER_data) <- gsub("//.csv$", "", EPTSER)
+
+#MYOALC
+names(MYOALC_data) <- gsub("//.csv$", "", MYOALC)
+
+#MYOBEC
+names(MYOBEC_data) <- gsub("//.csv$", "", MYOBEC)
+
+#MYOBRA1
+names(MYOBRA1_data) <- gsub("//.csv$", "", MYOBRA1)
+
+#MYOBRA2
+names(MYOBRA2_data) <- gsub("//.csv$", "", MYOBRA2)
+
+#MYOBRA3
+names(MYOBRA3_data) <- gsub("//.csv$", "", MYOBRA3)
+
+#MYODAS
+names(MYODAS_data) <- gsub("//.csv$", "", MYODAS)
+
+#MYODAU1
+names(MYODAU1_data) <- gsub("//.csv$", "", MYODAU1)
+
+#MYODAU2
+names(MYODAU2_data) <- gsub("//.csv$", "", MYODAU2)
+
+#MYODAU3
+names(MYODAU3_data) <- gsub("//.csv$", "", MYODAU3)
+
+#MYODAU4
+names(MYODAU4_data) <- gsub("//.csv$", "", MYODAU4)
+
+#MYOMYO
+names(MYOMYO_data) <- gsub("//.csv$", "", MYOMYO)
+
+#MYOMYS1
+names(MYOMYS1_data) <- gsub("//.csv$", "", MYOMYS1)
+
+MYOMYS2
+names(MYOMYS2_data) <- gsub("//.csv$", "", MYOMYS2)
+
+#MYONAT
+names(MYONAT_data) <- gsub("//.csv$", "", MYONAT)
+
+#NoIDCB
+names(NoIDCB_data) <- gsub("//.csv$", "", NoIDCB)
+
+#NoIDIB
+names(NoIDIB_data) <- gsub("//.csv$", "", NoIDIB)
+
+#NoIDOB
+names(NoIDOB_data) <- gsub("//.csv$", "", NoIDOB)
+
+#NYCLEI
+names(NYCLEI_data) <- gsub("//.csv$", "", NYCLEI)
+
+#NYCNOC
+names(NYCNOC_data) <- gsub("//.csv$", "", NYCNOC)
+
+#PIPNAT
+names(PIPNAT_data) <- gsub("//.csv$", "", PIPNAT)
+
+#PIPPIP
+names(PIPPIP_data) <- gsub("//.csv$", "", PIPPIP)
+
+#PIPPYG
+names(PIPPYG_data) <- gsub("//.csv$", "", PIPPYG)
+
+#PLEAUR
+names(PLEAUR_data) <- gsub("//.csv$", "", PLEAUR)
+
+#PLEAUS
+names(PLEAUS_data) <- gsub("//.csv$", "", PLEAUS)
+
+#VESMUR
+names(VESMUR_data) <- gsub("//.csv$", "", VESMUR)
+
+
+#To create one single dataframe with all single dataframes
+big_BARBAR <- rbindlist(BARBAR_data, fill = TRUE)
+
+big_EPTNIL <- rbindlist(EPTNIL_data, fill = TRUE)
+
+big_EPTSER <- rbindlist(EPTSER_data, fill = TRUE)
+
+big_MYOALC <- rbindlist(MYOALC_data, fill = TRUE)
+
+big_MYOBEC <- rbindlist(MYOBEC_data, fill = TRUE)
+
+big_MYOBRA1 <- rbindlist(MYOBRA1_data, fill = TRUE)
+big_MYOBRA2 <- rbindlist(MYOBRA2_data, fill = TRUE)
+big_MYOBRA3 <- rbindlist(MYOBRA3_data, fill = TRUE)
+
+big_MYODAS <- rbindlist(MYODAS_data, fill = TRUE)
+
+big_MYODAU1 <- rbindlist(MYODAU1_data, fill = TRUE)
+big_MYODAU2 <- rbindlist(MYODAU2_data, fill = TRUE)
+big_MYODAU3 <- rbindlist(MYODAU3_data, fill = TRUE)
+big_MYODAU4 <- rbindlist(MYODAU4_data, fill = TRUE)
+
+big_MYOMYO <- rbindlist(MYOMYO_data, fill = TRUE)
+
+big_MYOMYS1 <- rbindlist(MYOMYS1_data, fill = TRUE)
+big_MYOMYS2 <- rbindlist(MYOMYS2_data, fill = TRUE)
+
+big_MYONAT <- rbindlist(MYONAT_data, fill = TRUE)
+
+big_NoIDCB <- rbindlist(NoIDCB_data, fill = TRUE)
+big_NoIDIB <- rbindlist(NoIDIB_data, fill = TRUE)
+big_NoIDOB <- rbindlist(NoIDOB_data, fill = TRUE)
+
+big_NYCLEI <- rbindlist(NYCLEI_data, fill = TRUE)
+
+big_NYCNOC <- rbindlist(NYCNOC_data, fill = TRUE)
+
+big_PIPNAT <- rbindlist(PIPNAT_data, fill = TRUE)
+
+big_PIPPIP<- rbindlist(PIPPIP_data, fill = TRUE)
+
+big_PIPPYG <- rbindlist(PIPPYG_data, fill = TRUE)
+
+big_PLEAUR <- rbindlist(PLEAUR_data, fill = TRUE)
+
+big_PLEAUS <- rbindlist(PLEAUS_data, fill = TRUE)
+
+big_VESMUR <- rbindlist(VESMUR_data, fill = TRUE)
+
+alist <- list(big_BARBAR, big_EPTNIL, big_EPTSER,
+              big_MYOALC, big_MYOBEC, 
+              big_MYOBRA1, big_MYOBRA2, big_MYOBRA3, 
+              big_MYODAS,
+              big_MYODAU1, big_MYODAU2, big_MYODAU3, big_MYODAU4,
+              big_MYOMYO,
+              big_MYOMYS1, big_MYOMYS2,
+              big_MYONAT, 
+              big_NoIDCB, big_NoIDIB, big_NoIDOB, 
+              big_NYCLEI, big_NYCNOC,
+              big_PIPNAT, big_PIPPIP, big_PIPPYG, 
+              big_PLEAUR, big_PLEAUS, big_VESMUR) 
+
+big_data <- rbindlist(alist, fill=TRUE)
+dim(big_data)
+# 84874    32
+
+# check that these are all unique files 
+big_check <- as.data.frame(big_data$IN.FILE)
+test <- distinct(big_check)
+big_check <- big_data$IN.FILE
+big_check[duplicated(big_check)]
+
+dup <- big_data %>% filter(IN.FILE == "S4U11999_20210605_014417_000.wav")
+head(dup)
+
+# One file was copied over twice - it had the same manual ID. Remove one. 
+big_data1 <- big_data %>% distinct(IN.FILE, .keep_all = TRUE)
+dim(big_data1)
+# 84873    32
+
+#write.csv(big_data1, file = file.path(output_today, "allmanualacousticanalysis_2023.csv")) 
+#13.12.2023
+```
+
+# Clean the manual IDs 
+
+```{r}
+df <- big_data1
+
+names(df)
+
+## some of the manual ids are under "MANUAL.ID" and the others are under "MANUAL.ID." make one column with no NAs that combines both
+
+df1 <- df %>% dplyr::mutate(MID = dplyr::case_when(
+  MANUAL.ID != "NA" ~ as.character(MANUAL.ID), 
+  .default = as.character(MANUAL.ID.)))  
+
+df1$m_id <- as.factor(df1$MID)
+summary(df1$m_id)
+levels(df1$m_id)
+table(df1$m_id) # 
+
+##########################################################
+#### parsing multiple bats from passes ####
+##########################################################
+
+mcols <- c("manual_pass1", "manual_pass2", "manual_pass3")
+
+df2 <- df1 %>% 
+  tidyr::separate( col = m_id,
+                   sep = "_", 
+                   into = mcols) 
+
+# Take passes that had 3 identical passes and make them individual rows (i.e. a pass with two bats in it is now two passes)
+
+bat2 <- df2 %>% select(manual_pass2, IN.FILE) %>% drop_na() %>% 
+  rename(manual_pass = manual_pass2) %>% mutate(manual_pass = factor(manual_pass)) # 4225 obs with 2 bats 
+
+bat3 <- df2 %>% select(manual_pass3, IN.FILE) %>% drop_na() %>% 
+  rename(manual_pass = manual_pass3) %>% mutate(manual_pass = factor(manual_pass))# 81 obs with 3 bats
+
+# remove these colummns from df1 
+
+df2 <- df2 %>% select(-c(manual_pass2, manual_pass3)) %>% 
+               rename(manual_pass = manual_pass1) %>% mutate(manual_pass = factor(manual_pass)) # 19001 obs
+
+df3 <- full_join(df2, bat2) #89098 obs - that adds up, good!  
+df4 <- full_join(df3, bat3) #89179 obs - good! 
+# 84873 + 4225 + 81 = 89179
+
+# Now behavior
+df5 <- df4 %>%
+  mutate(manual_pass_clean = as.character(manual_pass)) %>% 
+  mutate(behavior = case_when(
+    str_detect(manual_pass_clean,".B.S") ~ "Both",
+    str_detect(manual_pass_clean, ".S.B") ~ "Both",
+    str_detect(manual_pass_clean, ".B") ~ "Feeding",
+    str_detect(manual_pass_clean, ".S") ~ "Social",
+    TRUE ~ "Commuting"
+  )) %>% mutate(manualid = factor(manual_pass_clean), 
+                behavior= factor(behavior)) %>% select(-c(manual_pass, manual_pass_clean)) %>% 
+  rename(file.name = IN.FILE)
+summary(df5$behavior)
+     # Both Commuting   Feeding    Social 
+     #  129     70359     12169      6522 
+
+## Create a year column 
+df6 <- df5 %>% mutate(year = case_when(
+  str_detect(DATE, "2021") ~ "2021",
+  str_detect(DATE, "2022") ~ "2022")) %>% 
+  mutate(year = factor(year)) 
+
+table(df6$year)
+#  2021  2022 
+# 47028 37845
+
+
+```
+

@@ -1134,9 +1134,9 @@ MYODAU.filepaths <- MYODAU$fullfilepath
 dir.create("P:/FolloForest2021/FolloForest_ManualAcousticAnalysis/MYODAU/WAV")
 
 # # Copy files that match the file paths into a new folder. 
-file.copy(from = MYODAU.filepaths,
-           to = "P:/FolloForest2021/FolloForest_ManualAcousticAnalysis/MYODAU/WAV")
- beep() # that worked! 
+# file.copy(from = MYODAU.filepaths,
+#            to = "P:/FolloForest2021/FolloForest_ManualAcousticAnalysis/MYODAU/WAV")
+#  beep() # that worked! 
  
 ################################################################################
  ## Need to break this into multiple subdirectories. 
@@ -1262,39 +1262,39 @@ sub_MYODAU$description <- "FF_MYODAU_MKT_thesis_passes_removed"
 
 # Now copy these into their own separate folder. 
 sub_MYODAU.filepaths <- sub_MYODAU$fullfilepath
-dir.create("P:/FolloForest2021/FolloForest_ManualAcousticAnalysis/MYODAU/subset1")
-write.csv(sub_MYODAU, "P:/FolloForest2021/FolloForest_ManualAcousticAnalysis/MYODAU/subset1/meta_FF_MYODAU_MKT_thesis_passes_removed.csv")
+#dir.create("P:/FolloForest2021/FolloForest_ManualAcousticAnalysis/MYODAU/subset1")
+#write.csv(sub_MYODAU, "P:/FolloForest2021/FolloForest_ManualAcousticAnalysis/MYODAU/subset1/meta_FF_MYODAU_MKT_thesis_passes_removed.csv")
 
 #20758/4 # 5189.5, that'll work
 #5189, 10378, 15567, 20758
 
-for (i in 1:4) {
-    newdir <- paste0("P:/FolloForest2021/FolloForest_ManualAcousticAnalysis/MYODAU/subset1/WAV",i)
-    dir.create(newdir) } # that worked!
+# for (i in 1:4) {
+#     newdir <- paste0("P:/FolloForest2021/FolloForest_ManualAcousticAnalysis/MYODAU/subset1/WAV",i)
+#     dir.create(newdir) } # that worked!
 
 MYODAU_df <- as.data.frame(sub_MYODAU.filepaths)
 # 
 # ################################################################################
 # 
-sub_MYODAU1 <- MYODAU_df[1:5189,]
-file.copy(from = sub_MYODAU1,
-           to = "P:/FolloForest2021/FolloForest_ManualAcousticAnalysis/MYODAU/subset1/WAV1")
- beep() # that worked!
- 
-
-sub_MYODAU2 <- MYODAU_df[5190:10378,]
-file.copy(from = sub_MYODAU2,
-           to = "P:/FolloForest2021/FolloForest_ManualAcousticAnalysis/MYODAU/subset1/WAV2")
- beep() # that worked!
-# 
-
-sub_MYODAU3 <- MYODAU_df[10379:15567,]
-file.copy(from = sub_MYODAU1,
-           to = "P:/FolloForest2021/FolloForest_ManualAcousticAnalysis/MYODAU/subset1/WAV3")
-beep() # that worked!
- 
- #  sub_MYODAU4 <- MYODAU_df[15568:20758,]
+# sub_MYODAU1 <- MYODAU_df[1:5189,]
 # file.copy(from = sub_MYODAU1,
+#            to = "P:/FolloForest2021/FolloForest_ManualAcousticAnalysis/MYODAU/subset1/WAV1")
+#  beep() # that worked!
+#  
+# 
+# sub_MYODAU2 <- MYODAU_df[5190:10378,]
+# file.copy(from = sub_MYODAU2,
+#            to = "P:/FolloForest2021/FolloForest_ManualAcousticAnalysis/MYODAU/subset1/WAV2")
+#  beep() # that worked!
+# # 
+# 
+# sub_MYODAU3 <- MYODAU_df[10379:15567,]
+# file.copy(from = sub_MYODAU3,
+#            to = "P:/FolloForest2021/FolloForest_ManualAcousticAnalysis/MYODAU/subset1/WAV3")
+# beep() # that worked!
+ 
+# sub_MYODAU4 <- MYODAU_df[15568:20758,]
+# file.copy(from = sub_MYODAU4,
 #            to = "P:/FolloForest2021/FolloForest_ManualAcousticAnalysis/MYODAU/subset1/WAV4")
 #  beep() # that worked!
 
