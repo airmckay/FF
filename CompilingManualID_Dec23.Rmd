@@ -15,6 +15,14 @@ library(janitor)
 library(renv)
 library(stringr)
 library(beepr)
+library(kableExtra)
+library(papeR)
+library(skimr)
+library(vtable)
+library(ggdark)
+library(RColorBrewer)
+library(cowplot)
+library(readxl)
 
 ## Setup output directory 
 output <- "C:/Users/apmc/OneDrive - Norwegian University of Life Sciences/3. Follo Forest 2021-2023/Manuscripts/Analyses/Outputs"
@@ -578,7 +586,6 @@ dim(big_data1)
 ```
 
 # Clean the manual IDs 
-
 ```{r}
 df <- big_data1
 
@@ -623,6 +630,17 @@ df3 <- full_join(df2, bat2) #89098 obs - that adds up, good!
 df4 <- full_join(df3, bat3) #89179 obs - good! 
 # 84873 + 4225 + 81 = 89179
 
+
+## some of the meta data is missing for the files of second and third bat observations
+# timemap <- df4 %>% select(INDIR, IN.FILE, DURATION, 
+#                           DATE, TIME, HOUR, DATE.12, TIME.12, HOUR.12, 
+#                           LATITUDE, LONGITUDE, MODEL, SERIAL.NO, 
+#                           FIRMWARE, PREFIX, AUTO.ID, PULSES, 
+#                           MATCHING, MATCH.RATIO, MARGIN) %>% distinct()
+# 
+# df4.5 <- left_join(df4, timemap)
+
+
 # Now behavior
 df5 <- df4 %>%
   mutate(manual_pass_clean = as.character(manual_pass)) %>% 
@@ -649,49 +667,33 @@ table(df6$year)
 #  2021  2022 
 # 50018 39161 
 
-
-## Now add in mkt data 
-
-mkt1 <- mkt %>% select(c(INDIR, file.name, DATE, TIME, HOUR,
-                         DATE.12, TIME.12, HOUR.12, AUTO.ID, 
-                         MATCH.RATIO, manualid_clean, behavior, 
-                         SitePlot, PlotType)) %>% 
-  rename(manualid = manualid_clean) %>% ungroup()
-
-mkt1$year <- "2021"
-mkt1$year <- as.factor(mkt1$year)
-
-summary(mkt1)
-
-# metaplot <- mkt %>% distinct(Site, SitePlot)
-# metaplot1 <- data.frame(c("FF12", "FF12", "FF12"), c("FF12-IB", "FF12-OB", "FF12-OB"))
-# names(metaplot1) <- c("Site", "SitePlot")
-# metaplot2 <- rbind(metaplot, metaplot1)
-
 # create the site and siteplot folders 
-
+#library(readxl)
 detectors <- read_excel("C:/Users/apmc/OneDrive - Norwegian University of Life Sciences/3. Follo Forest 2021-2023/Manuscripts/Analyses/Inputs/detector_overview_2021_2022 - Copy.xlsx")
 
 names(detectors)
 # "Site ID"  "Detector" "year"
 
-df6 <- df6 %>% dplyr::mutate(Detector =substr(file.name, 1,8)) 
+# some detectors do not have the serial name, they have an old project name instead
+fix <- df %>% dplyr::filter(grepl("VEMU", IN.FILE)) 
+fix$SERIAL.NO <- factor(fix$SERIAL.NO)
+levels(fix$SERIAL.NO)
+#"S4U10137"
 
-### FIX THE VEMUROOFTOP HERE! 
+df6. <- df6 
+df6.$fix.file <- gsub("VEMUROOFTOP", "S4U10137", df6.$file.name)
+
+df6 <- df6. %>% dplyr::mutate(Detector =substr(fix.file, 1,8)) 
+
 df6$detector.year <- paste0(df6$Detector, "_", df6$year)
 
 ## There is some missing data but I can only address some of it for now 
-
-
-
 
 detectors$detector.year <- paste0(detectors$Detector, "_", detectors$year)
 
 detectors1 <- detectors %>% select(c(`Site ID`, detector.year))
 
 df7 <- left_join(df6, detectors1)
-
-
 
 
 df7$SiteID <- df7$`Site ID`
@@ -707,6 +709,22 @@ df9 <- df8 %>% select(c(INDIR, file.name, DATE, TIME, HOUR,
                          DATE.12, TIME.12, HOUR.12, AUTO.ID, 
                          MATCH.RATIO, manualid, behavior, SitePlot, PlotType, year))
 
+
+
+
+## Now add in mkt data 
+mkt1 <- mkt %>% select(c(INDIR, file.name, DATE, TIME, HOUR,
+                         DATE.12, TIME.12, HOUR.12, AUTO.ID, 
+                         MATCH.RATIO, manualid_clean, behavior, 
+                         SitePlot, PlotType)) %>% 
+  rename(manualid = manualid_clean) %>% ungroup()
+
+mkt1$year <- "2021"
+mkt1$year <- as.factor(mkt1$year)
+
+summary(mkt1)
+
+
 df9$DATE <- as.Date(df9$DATE)
 df9$DATE.12 <- as.Date(df9$DATE.12)
 mkt1$TIME <- as.character(mkt1$TIME)
@@ -716,12 +734,12 @@ dim(mkt1) # 19811    15
 dim(df9) # 89179    15
 # 89179 + 19811 = 108990 - good! 
 
-df10 <- full_join(df9, mkt1) #108990     16
+df10 <- full_join(df9, mkt1) 
 dim(df10)
+#108990     15
 
 
-
-## CHeck for duplicates
+## Check for duplicates
 mktest <- mkt1 %>% select(file.name) %>% distinct()
 dftest <- df9 %>% select(file.name) %>% distinct() 
 
@@ -735,9 +753,182 @@ dup1 <- mkt %>% filter(file.name == "S4U11994_20220630_022005_000.wav") # one du
 addthis <- df9 %>% filter(file.name == "S4U11994_20220630_022005_000.wav")
 
 df11 <- df10 %>% subset(file.name !=  "S4U11994_20220630_022005_000.wav")
-df12 <- full_join(df10, addthis)
-
-metaplot <- df9 %>% 
+df12 <- full_join(df11, addthis)
+dim(df12)
+# 108989     15
 
 ```
 
+# Clean the manual IDs
+```{r}
+
+df12$manualid <- factor(df12$manualid)
+levels(df12$manualid)
+
+#  [1] "EPNI"      "EPNI.B"    "EPNI.B "   "EPNI.B.S"  "EPNI.S"    "LR"        "LR1"       "LR1.B"     "LR1.S"    
+# [10] "LR2"       "LR2.B"     "MR1"       "MR1 "      "MR1.B"     "MR1.S"     "MYOT"      "MYOT.B"    "MYOT.B.S" 
+# [19] "MYOT.B.S." "MYOT.S"    "NYNO"      "NYNO.B"    "NoID"      "NoID*BABA" "NoID.B"    "NoID.S"    "Noise"    
+# [28] "PAUR"      "PINA"      "PIPY"      "PIPY.B"    "PIPY.B.S"  "PIPY.S"    "PLAU"      "PLAU.S"    "Shrew?"   
+# [37] "VEMU"      "VEMU.S"    "FMsp"      "NoID?" 
+
+df12$behavior <- factor(df12$behavior)
+summary(df12$behavior) # No NAs, good 
+     # Both Commuting   Feeding    Social 
+     #  148     85615     15342      7884
+
+DF <- df12
+
+DF$m1 <- gsub("NoID?", "NoID", DF$manualid, fixed = TRUE)
+DF$m2 <- gsub("Shrew?", "Noise", DF$m1, fixed = TRUE)
+DF$m3 <- gsub(".B", "", DF$m2)
+DF$m4 <- gsub(".S.", "", DF$m3)
+DF$m5 <- gsub(".S", "", DF$m4)
+DF$m6 <- gsub("EPNI ", "EPNI", DF$m5)
+DF$m7 <- gsub("FMsp", "MYOT", DF$m6)
+DF$m8 <- gsub("LR", "LR2", DF$m7)
+DF$m9 <- gsub("NoIDA", "NoID", DF$m8)
+DF$m10 <- gsub("MR1 ", "MR1", DF$m9)
+DF$m11 <- gsub("LR21", "LR1", DF$m10)
+DF$m12 <- gsub("LR22", "LR2", DF$m11)
+DF$m13 <- gsub("VEMU", "LR2", DF$m12)
+DF$m14 <- gsub("PLAU", "PAUR", DF$m13)
+
+DF$m14 <- factor(DF$m14)
+ levels(DF$m14)
+ # [1] "EPNI"  "LR1"   "LR2"   "MR1"   "MYOT"  "NYNO"  "NoID"  "Noise"
+ # [9] "PAUR"  "PINA"  "PIPY" 
+
+DF$manual.id <- DF$m14
+
+DF1 <- DF %>% select(INDIR, file.name, 
+                     DATE, TIME, HOUR, 
+                     DATE.12, TIME.12, HOUR.12,
+                     AUTO.ID, MATCH.RATIO, 
+                     manual.id, behavior, 
+                     SitePlot, PlotType, year) %>% 
+  mutate(guild = case_when(
+    manual.id %in% c("MYOT", "PAUR", "PLAU") ~ "SRE",
+    manual.id %in% c("MR1", "PINA", "PIPY") ~ "MRE", 
+    manual.id %in% c("LR1", "LR2", "EPNI", "NYNO") ~ "LRE",
+    manual.id == "NoID" ~ "NoID", 
+    manual.id == "Noise" ~ "Noise"
+  )) %>% mutate(guild = factor(guild))
+
+summary(DF1$guild)
+#   LRE   MRE  NoID Noise   SRE 
+# 15817 12466   864  2464 77378 
+
+dim(DF1)
+
+# 416936 - Bat passes for both years combined
+# 108989 - bat passes manually ID'd
+```
+
+
+## Plotting 
+```{r}
+# ggplot(batsf) + 
+#   geom_count(aes(x = DATE, y = sitetype), 
+#              color = "orange", alpha = 0.8) + 
+#   dark_mode() + ylab("") + xlab("Night in season") + theme(text = element_text(size = 20)) +
+#   ggtitle("Overview of bat passes recorded per date per site type, noise excluded")
+# 
+# ggplot(batsf) + 
+#   geom_point(aes(x = DATE,), stat = "count" , 
+#              color = "orange", alpha = 0.8, size = 3) + 
+#   facet_wrap(~sitetype) + 
+#   dark_mode() + ylab("") + xlab("Night in season") + theme(text = element_text(size = 20)) +
+#   ggtitle("Overview of bat passes recorded per date per site type, noise excluded")
+# 
+# 
+# colourCount = length(unique(batsf$AUTO.ID.))
+# getPalette = colorRampPalette(brewer.pal(9, "BrBG"))
+#  
+# 
+ggplot(DF1) +
+  geom_bar(aes(x = manual.id), stat = "count") +
+  dark_mode() + ylab("") + xlab("") + theme(text = element_text(size = 20)) +
+  ggtitle("Overview of activity across manual ids")
+
+
+ggplot(DF1 %>% filter(PlotType == "Open",
+                      guild == "SRE")) +
+  geom_bar(aes(x = SitePlot), stat = "count") +
+  dark_mode() + ylab("") + xlab("") +
+  ggtitle("") + facet_wrap(~year)
+
+table(DF1$year)
+#  2021  2022 
+# 69828 39161 
+
+levels(FF$autoid)
+
+fauto <- ggplot(FF %>% filter(autoid %in% c(
+                       "BARBAR", "MYOALC", "MYOBEC", "MYOBRA", 
+                     "MYODAS", "MYODAU", "MYOMYO", "MYONAT", 
+                     "PLEAUR", "PLEAUS"))) +
+  geom_bar(aes(x = SitePlot, fill = Plot), stat = "count") +
+  dark_mode() + ylab("") + xlab("") +
+  ggtitle("") + facet_wrap(~year) + ylim(c(0,10500))
+
+
+f22 <- ggplot(DF1 %>% filter(guild == "SRE")) +
+  geom_bar(aes(x = SitePlot, fill = PlotType), stat = "count") +
+  dark_mode() + ylab("") + xlab("") +
+  ggtitle("") + facet_wrap(~year) + ylim(c(0,10500))
+
+plot_grid(fauto, f22)
+
+# table(FF$year)
+ #  2021   2022 
+# 222521 194415  
+
+f22 <- ggplot(DF1 %>% filter(guild != "SRE")) +
+  geom_bar(aes(x = SitePlot), stat = "count") +
+  dark_mode() + ylab("") + xlab("") +
+  ggtitle("") + facet_wrap(~year)
+f22
+
+levels(FF$autoid)
+
+f21 <- ggplot(FF %>% filter(autoid %in% c(
+                       "EPTNIL", "EPTSER", "NYCLEI", "NYCNOC", 
+                     "PIPNAT", "PIPPIP", "PIPPYG", "VESMUR",                     year == "2021"))) +
+  geom_bar(aes(x = SitePlot), stat = "count") +
+  dark_mode() + ylab("") + xlab("") +
+  ggtitle("") + facet_wrap(~year)
+
+
+# 
+# ggplot(batsf) + 
+#   geom_bar(aes(x = AUTO.ID., fill= AUTO.ID.), stat = "count") + 
+#   dark_mode() + ylab("") + xlab("") + theme(text = element_text(size = 20)) +
+#   ggtitle("Overview of activity across autoids") + 
+#   facet_wrap(~sitetype, nrow = 2) 
+# 
+# ggplot(batsf) + 
+#   geom_bar(aes(x = site), stat = "count", fill = "turquoise", alpha = 0.5) + 
+#   dark_mode() + ylab("") + xlab("") + theme(text = element_text(size = 20)) +
+#   ggtitle("Overview of bat passes between sites") + 
+#   facet_wrap(~sitetype, nrow = 2) 
+# 
+# ggplot(batsf) + 
+#   geom_bar(aes(x = site, fill = sitetype), stat = "count", alpha = 0.5, position = "dodge") + 
+#   scale_colour_manual(values = c("turquoise", "coral")) +
+#   dark_mode() + ylab("") + xlab("") + theme(text = element_text(size = 20)) +
+#   ggtitle("Overview of bat passes between sites") + labs(fill = "Site type")
+# 
+# 
+# ## Remove NoID and see what it looks like 
+# 
+# nbatsf <- batsf %>% filter(AUTO.ID. != "NoID") %>% droplevels()
+# colourCount = length(unique(nbatsf$AUTO.ID.))
+# getPalette = colorRampPalette(brewer.pal(9, "BrBG"))
+# 
+# 
+# ggplot(nbatsf) + 
+#   geom_bar(aes(x = AUTO.ID.), stat = "count", fill=getPalette(colourCount)) + 
+#   dark_mode() + ylab("") + xlab("") + theme(text = element_text(size = 20)) +
+#   ggtitle("Overview of activity across autoids")
+
+```
