@@ -587,6 +587,9 @@ dim(big_data1)
 
 # Clean the manual IDs 
 ```{r}
+
+# big_data1 <- read_csv("C:/Users/apmc/OneDrive - Norwegian University of Life Sciences/3. Follo Forest 2021-2023/Manuscripts/Analyses/Outputs/CombiningManualAcousticAnalysis_2023-12-13/allmanualacousticanalysis_2023.csv", 
+#      col_types = cols(...1 = col_skip()))
 df <- big_data1
 
 names(df)
@@ -661,7 +664,7 @@ summary(df5$behavior)
 df6 <- df5 %>% mutate(year = case_when(
   str_detect(file.name, "2021") ~ "2021",
   str_detect(file.name, "2022") ~ "2022")) %>% 
-  mutate(year = factor(year)) 
+  mutate(year = factor(year))  ## This was not the best solution, it had to be re-done down below:/
 
 table(df6$year)
 #  2021  2022 
@@ -719,9 +722,9 @@ mkt1 <- mkt %>% select(c(INDIR, file.name, DATE, TIME, HOUR,
                          SitePlot, PlotType)) %>% 
   rename(manualid = manualid_clean) %>% ungroup()
 
-mkt1$year <- "2021"
+mkt1$year <- "2022"
 mkt1$year <- as.factor(mkt1$year)
-
+mkt1$PlotType <- as.factor(mkt1$PlotType)
 summary(mkt1)
 
 
@@ -812,91 +815,352 @@ DF1 <- DF %>% select(INDIR, file.name,
     manual.id %in% c("LR1", "LR2", "EPNI", "NYNO") ~ "LRE",
     manual.id == "NoID" ~ "NoID", 
     manual.id == "Noise" ~ "Noise"
-  )) %>% mutate(guild = factor(guild))
+  )) %>% 
+  mutate(SitePlotYear = paste0(SitePlot, "-", year)) %>% 
+  mutate(across(c(manual.id, behavior, SitePlot, PlotType, year, SitePlotYear), factor)) 
 
-summary(DF1$guild)
-#   LRE   MRE  NoID Noise   SRE 
-# 15817 12466   864  2464 77378 
+summary(DF1)
+
 
 dim(DF1)
+# 108989     16
 
-# 416936 - Bat passes for both years combined
-# 108989 - bat passes manually ID'd
+DF1$SitePlot <- factor(DF1$SitePlot)
+summary(DF1$SitePlotYear)
+
+## Fix the date time hour issue 
+
+timefix <- DF1 %>% 
+  select(file.name, DATE, TIME, HOUR, DATE.12, TIME.12, HOUR.12, AUTO.ID, MATCH.RATIO, INDIR) %>% 
+  distinct()
+
+DFna <- DF1 %>% filter(!complete.cases(DATE)) #5116 obs that are missing datetime 
+names(DFna)
+DFna1 <- DFna %>% select(file.name, SitePlot, PlotType, year, SitePlotYear) %>% distinct()
+na_filenames <- DFna1$file.name
+
+timefix1 <- timefix %>% 
+  filter(file.name %in% na_filenames) %>%
+  filter(complete.cases(file.name, DATE, TIME, HOUR, DATE.12, TIME.12, HOUR.12, AUTO.ID, INDIR))
+  
+
+DFfix <- merge(DFna1, timefix1, by = "file.name", all.x = TRUE) %>% 
+  select(file.name, DATE, TIME, HOUR, DATE.12, TIME.12, HOUR.12)
+
+DF1$uid <- paste0("UID", 1:nrow(DF1))
+
+DF2 <- left_join(DF1, DFfix, by = "file.name") # NEARLY fixed
+
+names(DF2)
+
+DF2$DATE.x <- as.character(DF2$DATE.x)
+DF2$DATE.y <- as.character(DF2$DATE.y)
+DF2$DATE.12.x <- as.character(DF2$DATE.12.x)
+DF2$DATE.12.y <- as.character(DF2$DATE.12.y)
+
+DF2$TIME.x <- as.character(DF2$TIME.x)
+DF2$TIME.y <- as.character(DF2$TIME.y)
+DF2$TIME.12.x <- as.character(DF2$TIME.12.x)
+DF2$TIME.12.y <- as.character(DF2$TIME.12.y)
+
+DF2$HOUR.x <- as.character(DF2$HOUR.x)
+DF2$HOUR.y <- as.character(DF2$HOUR.y)
+DF2$HOUR.12.x <- as.character(DF2$HOUR.12.x)
+DF2$HOUR.12.y <- as.character(DF2$HOUR.12.y)
+
+DF3 <- DF2 %>% 
+  mutate(DATE = as.Date(case_when(
+  is.na(DATE.x) ~ DATE.y, 
+  DATE.x != "NA" ~ DATE.x))) %>% 
+    
+  mutate(TIME = case_when( 
+  is.na(TIME.x) ~ TIME.y, 
+  TIME.x != "NA" ~ TIME.x)) %>% 
+  
+  mutate(HOUR = as.integer(case_when(
+  is.na(HOUR.x) ~ HOUR.y, 
+  HOUR.x != "NA" ~ HOUR.x))) %>% 
+  
+  mutate(DATE.12 = as.Date(case_when(
+  is.na(DATE.12.x) ~ DATE.12.y, 
+  DATE.12.x != "NA" ~ DATE.12.x))) %>% 
+    
+  mutate(TIME.12 = case_when( 
+  is.na(TIME.12.x) ~ TIME.12.y, 
+  TIME.12.x != "NA" ~ TIME.12.x)) %>% 
+  
+  mutate(HOUR.12 = as.integer(case_when(
+  is.na(HOUR.12.x) ~ HOUR.12.y, 
+  HOUR.12.x != "NA" ~ HOUR.12.x))) %>% 
+  
+  select(-c(DATE.x, DATE.y, TIME.x, TIME.y, HOUR.x, HOUR.y,
+            DATE.12.x, DATE.12.y, TIME.12.x, TIME.12.y, HOUR.12.x, HOUR.12.y)) %>% 
+  
+  mutate(datetime = as.POSIXct(paste0(DATE, " ", TIME), format = "%Y-%m-%d %H:%M:%OS", 
+                               tz = "Europe/Berlin")) %>% 
+  mutate(nighttime = as.POSIXct(paste0(DATE.12, " ", TIME.12), format = "%Y-%m-%d %H:%M:%OS", 
+                               tz = "Europe/Berlin")) %>% 
+  mutate(guild = factor(guild)) 
+
+
+#write.csv(DF3, file = file.path(output_today, "ManualAnalaysis21_22_combined_datetime_fixed_troubleshooting_gaps.csv"))
+
+# 15.12.2023
+
 ```
 
 
-## Plotting 
+## Compare with the AUTO.IDs - check for subsetting errors and gaps in the data 
 ```{r}
-# ggplot(batsf) + 
-#   geom_count(aes(x = DATE, y = sitetype), 
-#              color = "orange", alpha = 0.8) + 
-#   dark_mode() + ylab("") + xlab("Night in season") + theme(text = element_text(size = 20)) +
-#   ggtitle("Overview of bat passes recorded per date per site type, noise excluded")
-# 
-# ggplot(batsf) + 
-#   geom_point(aes(x = DATE,), stat = "count" , 
-#              color = "orange", alpha = 0.8, size = 3) + 
-#   facet_wrap(~sitetype) + 
-#   dark_mode() + ylab("") + xlab("Night in season") + theme(text = element_text(size = 20)) +
-#   ggtitle("Overview of bat passes recorded per date per site type, noise excluded")
-# 
-# 
-# colourCount = length(unique(batsf$AUTO.ID.))
-# getPalette = colorRampPalette(brewer.pal(9, "BrBG"))
-#  
-# 
-ggplot(DF1) +
-  geom_bar(aes(x = manual.id), stat = "count") +
-  dark_mode() + ylab("") + xlab("") + theme(text = element_text(size = 20)) +
-  ggtitle("Overview of activity across manual ids")
+
+FF <- read_csv("C:/Users/apmc/OneDrive - Norwegian University of Life Sciences/3. Follo Forest 2021-2023/Manuscripts/Analyses/Outputs/SummarizingBatAcousticData_2023-10-12/Simple_AllBatData.CSV",
+     col_types = cols(...1 = col_skip()))
+dim(FF)
+# [1] 416936     17
+
+## Format columns:
+aFF <- FF %>% 
+  rename(PlotType = Plot) %>% 
+  mutate(Site = factor(Site), 
+   SitePlot = factor(SitePlot),
+   PlotType = factor(PlotType), 
+   Collection = factor(Collection),
+   year = factor(year), 
+   autoid = factor(autoid)) %>%## Create a MYTO autoid for easier comparison 
+ mutate(auto.id = case_when(
+        autoid %in% c("MYOALC", "MYOBEC", "MYOBRA", 
+               "MYODAS", "MYODAU", "MYOMYO", "MYOMYS", "MYONAT") ~ "MYOT",
+                        .default = autoid)) %>% 
+                      mutate(auto.id = factor(auto.id)) %>% 
+                      mutate(guild = case_when(
+                      auto.id %in% c("BARBAR", "MYOT", "PLEAUR", "PLEAUS") ~ "SRE", 
+                      auto.id %in% c("PIPPIP", "PIPNAT", "PIPPYG") ~ "MRE",
+                      auto.id %in% c("NYCNOC", "NYCLEI", "EPTNIL", "EPTSER", "VESMUR") ~ "LRE",
+                      auto.id == "NoID" ~ "NoID")) %>% 
+  mutate(guild = factor(guild)) 
+
+levels(aFF$auto.id)
+levels(aFF$guild)
+
+aFF$year <- as.factor(year(aFF$DATE))  
+
+aFF21 <- aFF %>% filter(year == 2021 & auto.id != "Noise") %>% droplevels() # 222521     17
+aFF22 <- aFF %>% filter(year == 2022 & auto.id != "Noise") %>% droplevels() # 194415     17
+
+################################################################################
+# Manual acoustic analysis results 
+
+## Make an experimental categorical variable for different times in the summer
 
 
-ggplot(DF1 %>% filter(PlotType == "Open",
-                      guild == "SRE")) +
-  geom_bar(aes(x = SitePlot), stat = "count") +
-  dark_mode() + ylab("") + xlab("") +
-  ggtitle("") + facet_wrap(~year)
+### Fix the SitePlot Issues 
 
-table(DF1$year)
-#  2021  2022 
-# 69828 39161 
+DF4 <- DF3 %>% 
+  select(-c(SitePlotYear, SitePlot, PlotType, year)) %>%
+  mutate(year = as.factor(year(DF3$DATE))) 
 
-levels(FF$autoid)
+DF4$fix.file <- gsub("VEMUROOFTOP", "S4U10137", DF4$file.name)
 
-fauto <- ggplot(FF %>% filter(autoid %in% c(
-                       "BARBAR", "MYOALC", "MYOBEC", "MYOBRA", 
-                     "MYODAS", "MYODAU", "MYOMYO", "MYONAT", 
-                     "PLEAUR", "PLEAUS"))) +
-  geom_bar(aes(x = SitePlot, fill = Plot), stat = "count") +
-  dark_mode() + ylab("") + xlab("") +
-  ggtitle("") + facet_wrap(~year) + ylim(c(0,10500))
+DF4.5 <- DF4 %>% dplyr::mutate(Detector =substr(fix.file, 1,8)) 
+
+DF4.5$detector.year <- paste0(DF4.5$Detector, "_", DF4.5$year)
+  
+detectors2 <- detectors1 %>% rename(SitePlot = "Site ID")  
+
+DF4.6 <- left_join(DF4.5, detectors2)
+
+DF4.7 <- DF4.6   %>%  mutate(PlotType = case_when(
+  str_detect(SitePlot, "-OB") ~ "Open",
+  str_detect(SitePlot, "-CB") ~ "Canopy", 
+  str_detect(SitePlot, "-IB") ~ "Interior")) %>% 
+  mutate(SitePlot = factor(SitePlot)) %>% 
+  mutate(Site = factor(substr(SitePlot, 1,4))) 
+
+mFF <- DF4.7
+table(mFF$Site)
+
+mFF$year <- as.factor(year(mFF$DATE)) 
+mFF21 <- mFF %>% filter(year == 2021) %>% filter(manual.id != "Noise") %>% droplevels() # 48866 obs
+mFF22 <- mFF %>% filter(year == 2022) %>% filter(manual.id != "Noise") %>% droplevels() # 57659 obs 
+
+summary(mFF21$DATE)
+summary(mFF22$DATE)
+## How many passes belong to MYOT and 2022?
+
+################################################################################
+# Compare temporal coverage of autoids/manualids 
+
+## 2021
+
+a <- ggplot(mFF21) + geom_point(aes(x = DATE), stat = "count") + 
+  facet_wrap(~guild) + theme_minimal() + 
+  ggtitle("Manual acoustic analysis") + 
+  xlab("2021")
+a
+
+b <- ggplot(aFF21) + geom_point(aes(x = DATE), stat = "count") + 
+  facet_wrap(~guild) + theme_minimal() + 
+  ggtitle("Automaitc acoustic analysis") + 
+  xlab("2021")
+
+plot_grid(a,b)
 
 
-f22 <- ggplot(DF1 %>% filter(guild == "SRE")) +
-  geom_bar(aes(x = SitePlot, fill = PlotType), stat = "count") +
-  dark_mode() + ylab("") + xlab("") +
-  ggtitle("") + facet_wrap(~year) + ylim(c(0,10500))
+## 2022 
 
-plot_grid(fauto, f22)
+a <- ggplot(mFF22) + geom_point(aes(x = DATE), stat = "count") + 
+  facet_wrap(~guild) + theme_minimal() + 
+  ggtitle("Manual acoustic analysis") + 
+  xlab("2022")
 
-# table(FF$year)
- #  2021   2022 
-# 222521 194415  
+b <- ggplot(aFF22) + geom_point(aes(x = DATE), stat = "count") + 
+  facet_wrap(~guild) + theme_minimal() + 
+  ggtitle("Automaitc acoustic analysis") + 
+  xlab("2022")
 
-f22 <- ggplot(DF1 %>% filter(guild != "SRE")) +
-  geom_bar(aes(x = SitePlot), stat = "count") +
-  dark_mode() + ylab("") + xlab("") +
-  ggtitle("") + facet_wrap(~year)
-f22
+plot_grid(a,b)
 
-levels(FF$autoid)
+### SRE bats only 
 
-f21 <- ggplot(FF %>% filter(autoid %in% c(
-                       "EPTNIL", "EPTSER", "NYCLEI", "NYCNOC", 
-                     "PIPNAT", "PIPPIP", "PIPPYG", "VESMUR",                     year == "2021"))) +
-  geom_bar(aes(x = SitePlot), stat = "count") +
-  dark_mode() + ylab("") + xlab("") +
-  ggtitle("") + facet_wrap(~year)
+
+a <- ggplot(mFF21  %>% filter(guild == "SRE") %>% droplevels()) + 
+  geom_point(aes(x = DATE), stat = "count", color = "gray", alpha = 0.7) + 
+  geom_smooth(aes(x = DATE, color = PlotType, fill = PlotType), stat = "count") + 
+  theme_minimal() + 
+  ggtitle("") + 
+  xlab("2021") + theme(legend.position = "none") + ggtitle("Manual acoustic analysis - SRE bats only")
+
+
+b <- ggplot(mFF22  %>% filter(guild == "SRE") %>% droplevels()) + 
+  geom_point(aes(x = DATE), stat = "count", color = "gray", alpha = 0.7) + 
+  geom_smooth(aes(x = DATE, color = PlotType, fill = PlotType), stat = "count") + 
+  theme_minimal() + 
+  ggtitle("") + 
+  xlab("2022") + theme(legend.position = "none") 
+
+plot_grid(a,b, nrow = 2) 
+
+
+#### Where are the gaps in monitoring? 
+## Auto 
+a <- ggplot(aFF21) + geom_count(aes(x = DATE, y=Site), alpha = 0.5) + 
+  facet_wrap(~PlotType, nrow=3) + theme_minimal() + 
+  ggtitle("Automaitc acoustic analysis") + 
+  xlab("2021") + theme(legend.position = "none")
+
+
+b <- ggplot(aFF22) + geom_count(aes(x = DATE, y=Site), alpha = 0.5) + 
+  facet_wrap(~PlotType, nrow=3) + theme_minimal() + 
+  ggtitle("Automaitc acoustic analysis") + 
+  xlab("2022") + theme(legend.position = "none")
+
+plot_grid(a,b)
+
+## Manual 
+a <- ggplot(mFF21) + geom_count(aes(x = DATE, y=Site), alpha = 0.5) + 
+  facet_wrap(~PlotType, nrow=3) + theme_minimal() + 
+  ggtitle("Manual acoustic analysis") + 
+  xlab("2021") + theme(legend.position = "none")
+
+
+b <- ggplot(mFF22) + geom_count(aes(x = DATE, y=Site), alpha = 0.5) + 
+  facet_wrap(~PlotType, nrow=3) + theme_minimal() + 
+  ggtitle("Manual acoustic analysis") + 
+  xlab("2022") + theme(legend.position = "none")
+
+plot_grid(a,b)
+
+
+## Manual - SRE bats only
+a <- ggplot(mFF21 %>% filter(guild == "SRE")) + geom_count(aes(x = DATE, y=Site), alpha = 0.5) + 
+  facet_wrap(~PlotType, nrow=3) + theme_minimal() + 
+  ggtitle("Manual acoustic analysis - SRE bats only") + 
+  xlab("2021") + theme(legend.position = "none")
+
+
+b <- ggplot(mFF22 %>% filter(guild == "SRE")) + geom_count(aes(x = DATE, y=Site), alpha = 0.5) + 
+  facet_wrap(~PlotType, nrow=3) + theme_minimal() + 
+  ggtitle("Manual acoustic analysis - SRE bats only") + 
+  xlab("2022") + theme(legend.position = "none")
+
+plot_grid(a,b)
+
+## Manual - SRE bats and open plots only
+a <- ggplot(mFF21 %>% filter(guild == "SRE" & PlotType == "Open") %>% droplevels()) + 
+  geom_count(aes(x = DATE, y=Site), alpha = 0.5) + 
+  facet_wrap(~PlotType, nrow=3) + theme_minimal() + 
+  ggtitle("Manual acoustic analysis - SRE bats only") + 
+  xlab("2021") + theme(legend.position = "none")
+
+
+b <- ggplot(mFF22 %>% filter(guild == "SRE" & PlotType == "Open") %>% droplevels()) + 
+  geom_count(aes(x = DATE, y=Site), alpha = 0.5) + 
+  facet_wrap(~PlotType, nrow=3) + theme_minimal() + 
+  ggtitle("Manual acoustic analysis - SRE bats only") + 
+  xlab("2022") + theme(legend.position = "none")
+
+plot_grid(a,b)
+
+
+################################################################################
+
+ggplot(mFF22) + geom_bar(aes(x = PlotType, fill = PlotType), stat = "count") + 
+  facet_wrap(~manual.id) + theme_minimal() + 
+  ggtitle("Manual acoustic analysis") + 
+  xlab("2022")
+
+ggplot(aFF22) + geom_bar(aes(x = Plot, fill = Plot), stat = "count") + 
+  facet_wrap(~auto.id) + 
+  theme_minimal() + 
+  ggtitle("Automaitc acoustic analysis") + 
+  xlab("2022")
+
+################################################################################
+# How do SRE bats use the different plots between years? Proportion bar charts 
+
+ggplot(data = mFF21 %>% filter(guild == "SRE") %>% droplevels(), aes(x = PlotType)) + 
+  geom_bar(aes(fill = behavior)) + theme_minimal() + ggtitle("Manual acoustic analysis - 2021")
+
+ggplot(data = mFF22 %>% filter(guild == "SRE") %>% droplevels(), aes(x = PlotType)) + 
+  geom_bar(aes(fill = behavior)) + theme_minimal() + ggtitle("Manual acoustic analysis - 2022")
+
+## Now separated by month 
+mFF21$month <- month(mFF21$DATE)
+mFF22$month <- month(mFF22$DATE)
+
+a <- ggplot(data = 
+         mFF21 %>% 
+         filter(guild == "SRE") %>% 
+         filter(behavior %in% c("Feeding", "Commuting")) %>% droplevels(), 
+                aes(x = PlotType)) + 
+  geom_bar(aes(fill = behavior)) + 
+  theme_minimal() + theme(legend.position = "none") + 
+  ggtitle("Manual acoustic analysis - 2021 - SRE only - red = commuting, blue = feeding") +
+  facet_wrap(~month, nrow= 1, ncol = 5) 
+
+b <- ggplot(data = 
+         mFF22 %>% 
+         filter(guild == "SRE") %>%
+         filter(behavior %in% c("Feeding", "Commuting")) %>% droplevels(), 
+       aes(x = PlotType)) + 
+  geom_bar(aes(fill = behavior)) + 
+  theme_minimal() + theme(legend.position = "none") +
+  ggtitle("Manual acoustic analysis - 2022 - SRE only") +
+  facet_wrap(~month, nrow= 1, ncol = 5) 
+
+plot_grid(a,b, nrow = 2)
+## 
+
+### How much does this relationship change if we break up the summer into 3 different sections? 
+
+## Discuss different ways of sub-setting the data with Katrine 
+
+###########################################
+
+
+
+
+
 
 
 # 
