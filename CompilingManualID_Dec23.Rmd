@@ -1104,7 +1104,8 @@ plot_grid(a,b)
 
 ################################################################################
 
-ggplot(mFF22) + geom_bar(aes(x = PlotType, fill = PlotType), stat = "count") + 
+ggplot(mFF22) + 
+  geom_bar(aes(x = PlotType, fill = PlotType), stat = "count") + 
   facet_wrap(~manual.id) + theme_minimal() + 
   ggtitle("Manual acoustic analysis") + 
   xlab("2022")
@@ -1117,39 +1118,128 @@ ggplot(aFF22) + geom_bar(aes(x = Plot, fill = Plot), stat = "count") +
 
 ################################################################################
 # How do SRE bats use the different plots between years? Proportion bar charts 
+library(ggstats)
+library(ggplot2)
+mFF21$PlotType = factor(mFF21$PlotType)
+mFF22$PlotType = factor(mFF22$PlotType)
 
-ggplot(data = mFF21 %>% filter(guild == "SRE") %>% droplevels(), aes(x = PlotType)) + 
-  geom_bar(aes(fill = behavior)) + theme_minimal() + ggtitle("Manual acoustic analysis - 2021")
+ggplot(data = mFF21 %>% filter(guild == "SRE") %>% droplevels()) + 
+  aes(x = PlotType, fill = behavior, by = PlotType) +
+  geom_bar(position = "fill", stat = "prop") + 
+  theme_minimal() + 
+  ggtitle("Manual acoustic analysis - 2021")
 
-ggplot(data = mFF22 %>% filter(guild == "SRE") %>% droplevels(), aes(x = PlotType)) + 
-  geom_bar(aes(fill = behavior)) + theme_minimal() + ggtitle("Manual acoustic analysis - 2022")
+ggplot(data = mFF22 %>% filter(guild == "SRE") %>% droplevels()) + 
+  aes(x =PlotType, fill = behavior, by = PlotType) +
+  geom_bar(position = "fill", stat = "prop") + 
+  theme_minimal() + 
+  ggtitle("Manual acoustic analysis - 2022")
 
 ## Now separated by month 
 mFF21$month <- month(mFF21$DATE)
 mFF22$month <- month(mFF22$DATE)
 
+
+ a <- ggplot(data = 
+          mFF21 %>% 
+          filter(guild == "SRE") %>% 
+          filter(behavior %in% c("Commuting", "Feeding")) %>% droplevels(), 
+                 aes(x = PlotType)) + 
+   geom_bar(aes(fill = behavior)) + 
+   theme_minimal() + theme(legend.position = "none") + 
+   ggtitle("Manual acoustic analysis - 2021 - SRE only - red = commuting, blue = feeding") +
+   facet_wrap(~month, nrow= 1, ncol = 5) 
+ b <- ggplot(data = 
+          mFF22 %>% 
+          filter(guild == "SRE") %>%
+          filter(behavior %in% c("Commuting", "Feeding")) %>% droplevels(), 
+        aes(x = PlotType)) + 
+   geom_bar(aes(fill = behavior)) + 
+   theme_minimal() + theme(legend.position = "none") +
+   ggtitle("Manual acoustic analysis - 2022 - SRE only") +
+   facet_wrap(~month, nrow= 1, ncol = 5) 
+ plot_grid(a,b, nrow = 2)
+ 
+ ## Proportions for real below
+
+
 a <- ggplot(data = 
          mFF21 %>% 
          filter(guild == "SRE") %>% 
-         filter(behavior %in% c("Feeding", "Commuting")) %>% droplevels(), 
-                aes(x = PlotType)) + 
-  geom_bar(aes(fill = behavior)) + 
+         filter(behavior %in% c("Feeding", "Commuting")) %>% droplevels()) + 
+  aes(x = PlotType, fill = behavior, by = PlotType) +
+  geom_bar(position = "fill", stat = "prop") + 
   theme_minimal() + theme(legend.position = "none") + 
   ggtitle("Manual acoustic analysis - 2021 - SRE only - red = commuting, blue = feeding") +
+  facet_wrap(~month, nrow= 1, ncol = 5) 
+
+a
+
+b <- ggplot(data = 
+         mFF22 %>% 
+         filter(guild == "SRE") %>%
+         filter(behavior %in% c("Feeding", "Commuting")) %>% droplevels()) +
+  aes(x = PlotType, fill = behavior, by = PlotType) +
+  geom_bar(position = "fill", stat = "prop") + 
+  theme_minimal() + theme(legend.position = "none") +
+  ggtitle("Manual acoustic analysis - 2022 - SRE only") +
+  facet_wrap(~month, nrow= 1, ncol = 5) 
+b
+
+plot_grid(a,b, nrow = 2)
+## 
+
+## Now just feeding 
+
+a <- ggplot(data = 
+         mFF21 %>% 
+         filter(guild == "SRE") %>% 
+         filter(behavior == "Feeding") %>% droplevels(), 
+                aes(x = PlotType)) + 
+  geom_bar(aes(fill = PlotType)) + 
+  theme_minimal() + theme(legend.position = "none") + 
+  ggtitle("Manual acoustic analysis - 2021 - SRE only - feeding only") +
   facet_wrap(~month, nrow= 1, ncol = 5) 
 
 b <- ggplot(data = 
          mFF22 %>% 
          filter(guild == "SRE") %>%
-         filter(behavior %in% c("Feeding", "Commuting")) %>% droplevels(), 
+         filter(behavior == "Feeding") %>% droplevels(), 
        aes(x = PlotType)) + 
-  geom_bar(aes(fill = behavior)) + 
+  geom_bar(aes(fill = PlotType)) + 
   theme_minimal() + theme(legend.position = "none") +
-  ggtitle("Manual acoustic analysis - 2022 - SRE only") +
+  ggtitle("Manual acoustic analysis - 2022 - SRE only - feeding only") +
   facet_wrap(~month, nrow= 1, ncol = 5) 
 
 plot_grid(a,b, nrow = 2)
 ## 
+
+## Now just commuting 
+
+a <- ggplot(data = 
+         mFF21 %>% 
+         filter(guild == "SRE") %>% 
+         filter(behavior == "Commuting") %>% droplevels(), 
+                aes(x = PlotType)) + 
+  geom_bar(aes(fill = PlotType)) + 
+  theme_minimal() + theme(legend.position = "none") + 
+  ggtitle("Manual acoustic analysis - 2021 - SRE only - commuting only") +
+  facet_wrap(~month, nrow= 1, ncol = 5) 
+
+b <- ggplot(data = 
+         mFF22 %>% 
+         filter(guild == "SRE") %>%
+         filter(behavior == "Commuting") %>% droplevels(), 
+       aes(x = PlotType)) + 
+  geom_bar(aes(fill = PlotType)) + 
+  theme_minimal() + theme(legend.position = "none") +
+  ggtitle("Manual acoustic analysis - 2022 - SRE only - commuting only") +
+  facet_wrap(~month, nrow= 1, ncol = 5) 
+
+plot_grid(a,b, nrow = 2)
+## 
+
+
 
 ### How much does this relationship change if we break up the summer into 3 different sections? 
 
