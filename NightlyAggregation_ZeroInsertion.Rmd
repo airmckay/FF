@@ -1,0 +1,99 @@
+---
+title: "NightlyAggregation_ZeroInsertion"
+output: html_document
+date: "2023-12-27"
+---
+
+
+```{r}
+
+library(data.table)
+library(tidyverse)
+library(beepr)
+library(lubridate)
+library(purrr)
+library(janitor)
+#renv::install("rstudio/renv")
+library(renv)
+library(stringr)
+library(beepr)
+library(kableExtra)
+library(papeR)
+library(skimr)
+library(vtable)
+library(ggdark)
+library(RColorBrewer)
+library(cowplot)
+library(readxl)
+library(readr)
+
+## Setup output directory 
+output <- "C:/Users/apmc/OneDrive - Norwegian University of Life Sciences/3. Follo Forest 2021-2023/Manuscripts/Analyses/Outputs"
+
+file.name <- "BatData_Aggregate_ZeroInsert"
+
+todays_date <- Sys.Date()
+ 
+dir.name <- str_c(output,"/", file.name, "_", todays_date)
+dir.name
+ 
+output_today <- dir.name
+output_today
+
+dir.create(output_today)
+output_today
+## "C:/Users/apmc/OneDrive - Norwegian University of Life Sciences/3. Follo Forest 2021-2023/Manuscripts/Analyses/Outputs/BatData_Aggregate_ZeroInsert_2023-12-27"
+
+bats <- read_csv("C:/Users/apmc/OneDrive - Norwegian University of Life Sciences/3. Follo Forest 2021-2023/Manuscripts/Analyses/Outputs/CombiningManualAcousticAnalysis_2023-12-27/ManualAnalaysis21_22_combined_datetime_PlotType_Guild.csv",
+     col_types = cols(...1 = col_skip()))
+
+```
+
+
+# House keeping
+```{r}
+
+bats <- bats %>% 
+  mutate(manual.id = factor(manual.id),
+         behavior = factor(behavior), 
+         guild = factor(guild), 
+         year = factor(year), 
+         Detector = factor(Detector), 
+         detector.year = factor(detector.year),
+         SitePlot = factor(SitePlot),
+         PlotType = factor(PlotType),
+         Site = factor(Site)) %>% 
+  mutate(SitePlotYear = factor(paste0(SitePlot, "-", year))) 
+
+batmap <- bats %>% select(Site, SitePlot, year, detector.year, SitePlotYear) %>% unique()
+
+bats$jnight <- yday(bats$DATE.12)
+timemap <- bats %>% dplyr::select(jnight) %>% distinct(jnight, .keep_all = TRUE) # 140 nights of survey (before addding in zero nights)
+
+# Number of bat passes per night for each manual ID AND behavior summed 
+bats1 <- bats %>% group_by(SitePlotYear, DATE.12, manual.id, behavior) %>% dplyr::summarize(batpass = sum(n()))
+
+summary(bats1)
+summary(bats1$SitePlotYear)
+
+bats2 <- left_join(bats1, batmap)
+summary(bats2) # 25508 detector-manual.id-behavior nights  
+
+active.nights <- read_delim("C:/Users/apmc/OneDrive - Norwegian University of Life Sciences/3. Follo Forest 2021-2023/2021/Analyses/Inputs/detector_activenights_edited.csv", 
+     delim = ";", escape_double = FALSE, trim_ws = TRUE)
+
+active.nights$SitePlot <- gsub("FF1-", "FF01-", active.nights$SitePlot)
+active.nights$SitePlot <- gsub("FF2-", "FF02-", active.nights$SitePlot)
+active.nights$SitePlot <- gsub("FF3-", "FF03-", active.nights$SitePlot)
+active.nights$SitePlot <- gsub("FF4-", "FF04-", active.nights$SitePlot)
+active.nights$SitePlot <- gsub("FF5-", "FF05-", active.nights$SitePlot)
+active.nights$SitePlot <- gsub("FF6-", "FF06-", active.nights$SitePlot)
+active.nights$SitePlot <- gsub("FF7-", "FF07-", active.nights$SitePlot)
+active.nights$SitePlot <- gsub("FF8-", "FF08-", active.nights$SitePlot)
+active.nights$SitePlot <- gsub("FF9-", "FF09-", active.nights$SitePlot)
+
+active.nights$SitePlot <- factor(active.nights$SitePlot)
+summary(active.nights$SitePlot)
+
+```
+

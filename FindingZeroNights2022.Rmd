@@ -1,0 +1,361 @@
+---
+title: "FindingZeroNights2022"
+output: html_document
+date: "2023-12-27"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+
+#load first three packages in this order
+library(tidyverse) 
+library(plyr)
+library(dplyr)
+library(sjstats)
+library(readxl)
+library(readr)
+library(stringr)
+library(devtools)
+library(lubridate)
+library(vegan)
+library(suncalc)
+library(scales)
+library(RColorBrewer)
+library(plotly)
+library(hrbrthemes)
+library(htmlwidgets)
+library(viridis)
+library(viridisLite)
+
+## Setup output directory 
+output <- "C:/Users/apmc/OneDrive - Norwegian University of Life Sciences/3. Follo Forest 2021-2023/Manuscripts/Analyses/Outputs"
+
+file.name <- "FF22_FindZeroNights"
+
+todays_date <- Sys.Date()
+ 
+dir.name <- str_c(output,"/", file.name, "_", todays_date)
+dir.name
+ 
+output_today <- dir.name
+output_today
+
+dir.create(output_today)
+output_today
+## "C:/Users/apmc/OneDrive - Norwegian University of Life Sciences/3. Follo Forest 2021-2023/Manuscripts/Analyses/Outputs/FF22_FindZeroNights_2023-12-27"
+
+## Import 2022 data
+###############################################################################
+
+bats22 <- read_csv("P:/FolloForest2021/FolloForest2022/Acoustics_Subsets/Extraction/2022_AutomaticallyProcessed_BatAcousticData_allsitescombined_unedited.csv")
+# 494268 obs
+
+# Create a SitePlot column and format the other columns
+bats22$INDIR1 <- gsub("\\", "/", bats22$INDIR, fixed = TRUE)
+head(bats22$INDIR1)
+# "\\\\largefile.nmbu.no\\Project\\FolloForest2021\\FolloForest2022\\Acoustics\\FF07\\FF07-IB\\DATA\\FF07-IB_05.07.2022"
+
+b22_inventory <- bats22 %>% select(-1) %>% mutate(map = str_remove(INDIR1, "//largefile.nmbu.no/Project/FolloForest2021/FolloForest2022/Acoustics/"))
+head(b22_inventory$map)
+# "FF07/FF07-IB/DATA/FF07-IB_05.07.2022"
+
+# Parse out the different directories - some directories will have two data folders.
+cols <- c("Site", "SitePlot", "DATA", "Collection")
+b22_inventory1 <- b22_inventory %>% tidyr::separate(col = map,
+                                                             sep = "/",
+                                                             into = cols,
+                                                             remove = FALSE)
+# parse out the file paths to just get the file names
+# For some directories there were two "Data" folders (Data/Data) so I will need to recreate a complete file list from the two columns...
+head(b22_inventory1$SitePlot)
+summary(b22_inventory1)
+
+b22_df1 <- b22_inventory1 %>% select(-DATA) %>% mutate(Site = factor(Site),
+                                                       SitePlot = factor(SitePlot),
+                                                       Collection = factor(Collection))
+
+summary(b22_df1)
+
+## Add a row index column
+b22_df1$uid <- 1:nrow(b22_df1)
+summary(b22_df1$uid )
+
+## Make one auoto ID column
+adf1 <- b22_df1 %>% select(uid, AUTO.ID) %>% drop_na()
+# 1323 observations
+
+adf2 <- b22_df1 %>% select(uid, AUTO.ID.) %>% drop_na()
+# 494268 obs, no NAs - so I will just use this AUTO ID column and drop the other, along with some other no longer useful columns
+
+b22_df2 <- b22_df1 %>% dplyr::select(-c(uid, map, AUTO.ID, INDIR1)) %>% dplyr::mutate(autoid = factor(AUTO.ID.))
+
+b22_df2 <- b22_df2 %>% mutate(Plot = case_when(
+  str_detect(SitePlot, "-OB") ~ "Open",
+  str_detect(SitePlot, "-CB") ~ "Canopy",
+  str_detect(SitePlot, "-IB") ~ "Interior")) %>% mutate(Plot = factor(Plot))
+
+summary(b22_df2$autoid)
+summary(b22_df2$Site)
+summary(b22_df2$SitePlot)
+summary(b22_df2$Plot)
+#Raw combined AUTOID Kaleidoscope Pro output from FF22 field season bat acoustic data
+#41 observations of 40 variables
+
+raw <- b22_df2
+
+raw$night <- raw$DATE.12
+
+
+
+
+```
+
+
+
+
+
+
+```{r}
+
+
+countSitePlotDayWnoisenight <- raw %>% 
+  group_by(SitePlot, night) %>% 
+  tally()
+
+countSitePlotDayWnoisenight <- countSitePlotDayWnoisenight[order(countSitePlotDayWnoisenight$night, decreasing = TRUE),]
+
+str(countSitePlotDayWnoisenight)
+head(countSitePlotDayWnoisenight)
+
+write.csv(countSitePlotDayWnoisenight, file = file.path(output_today, "countSitePlotDayWnoisenight_backup_unedited.csv")) 
+
+SitePlotnightNoiseMatrix <- table(countSitePlotDayWnoisenight$SitePlot, countSitePlotDayWnoisenight$night)
+
+# How does it look? 
+hrbrthemes::import_roboto_condensed() 
+
+p <-  ggplot(countSitePlotDayWnoisenight,  aes(x=night, y=SitePlot, fill=n)) +
+      geom_tile() +
+      scale_fill_viridis(discrete=FALSE) +
+      theme_ipsum() +
+      ggtitle("All recordings for all SitePlots, including noise files")
+p # Exported 
+
+## Now with plot_ly 
+
+pp <- ggplotly(p)
+pp
+
+# Export
+#htmlwidgets::saveWidget(as_widget(pp), "countmatrixwnoise.html")
+
+# One Site at a time
+
+FF01 <- countSitePlotDayWnoisenight %>% 
+    dplyr::filter(str_detect(SitePlot, "FF01")) %>% 
+    droplevels()
+
+p <-  ggplot(
+  data = FF01,  
+ aes(x=night, y=SitePlot, fill=n)) +
+      geom_tile() +
+      scale_fill_viridis(discrete=FALSE) +
+      theme_ipsum() +
+      ggtitle("All recordings for all SitePlots, including noise files")
+p # Exported 
+
+## Now with plot_ly 
+pp <- ggplotly(p)
+pp
+
+
+# One Site at a time
+FF02 <- countSitePlotDayWnoisenight %>% 
+    dplyr::filter(str_detect(SitePlot, "FF02")) %>% 
+    droplevels()
+
+p <-  ggplot(
+  data = FF02,  
+ aes(x=night, y=SitePlot, fill=n)) +
+      geom_tile() +
+      scale_fill_viridis(discrete=FALSE) +
+      theme_ipsum() +
+      ggtitle("All recordings for all SitePlots, including noise files")
+p # Exported 
+
+## Now with plot_ly 
+pp <- ggplotly(p)
+pp
+
+
+# One Site at a time
+FF03 <- countSitePlotDayWnoisenight %>% 
+    dplyr::filter(str_detect(SitePlot, "FF03")) %>% 
+    droplevels()
+
+p <-  ggplot(
+  data = FF03,  
+ aes(x=night, y=SitePlot, fill=n)) +
+      geom_tile() +
+      scale_fill_viridis(discrete=FALSE) +
+      theme_ipsum() +
+      ggtitle("All recordings for all SitePlots, including noise files")
+p # Exported 
+
+## Now with plot_ly 
+pp <- ggplotly(p)
+pp
+
+
+# One Site at a time
+FF04 <- countSitePlotDayWnoisenight %>% 
+    dplyr::filter(str_detect(SitePlot, "FF04")) %>% 
+    droplevels()
+
+p <-  ggplot(
+  data = FF04,  
+ aes(x=night, y=SitePlot, fill=n)) +
+      geom_tile() +
+      scale_fill_viridis(discrete=FALSE) +
+      theme_ipsum() +
+      ggtitle("All recordings for all SitePlots, including noise files")
+p # Exported 
+
+## Now with plot_ly 
+pp <- ggplotly(p)
+pp
+
+
+# One Site at a time
+FF05 <- countSitePlotDayWnoisenight %>% 
+    dplyr::filter(str_detect(SitePlot, "FF05")) %>% 
+    droplevels()
+
+p <-  ggplot(
+  data = FF05,  
+ aes(x=night, y=SitePlot, fill=n)) +
+      geom_tile() +
+      scale_fill_viridis(discrete=FALSE) +
+      theme_ipsum() +
+      ggtitle("All recordings for all SitePlots, including noise files")
+p # Exported 
+
+## Now with plot_ly 
+pp <- ggplotly(p)
+pp
+
+# One Site at a time
+FF06 <- countSitePlotDayWnoisenight %>% 
+    dplyr::filter(str_detect(SitePlot, "FF06")) %>% 
+    droplevels()
+
+p <-  ggplot(
+  data = FF06,  
+ aes(x=night, y=SitePlot, fill=n)) +
+      geom_tile() +
+      scale_fill_viridis(discrete=FALSE) +
+      theme_ipsum() +
+      ggtitle("All recordings for all SitePlots, including noise files")
+p # Exported 
+
+## Now with plot_ly 
+pp <- ggplotly(p)
+pp
+
+
+# One Site at a time
+FF07 <- countSitePlotDayWnoisenight %>% 
+    dplyr::filter(str_detect(SitePlot, "FF07")) %>% 
+    droplevels()
+
+p <-  ggplot(
+  data = FF07,  
+ aes(x=night, y=SitePlot, fill=n)) +
+      geom_tile() +
+      scale_fill_viridis(discrete=FALSE) +
+      theme_ipsum() +
+      ggtitle("All recordings for all SitePlots, including noise files")
+p # Exported 
+
+## Now with plot_ly 
+pp <- ggplotly(p)
+pp
+
+# One Site at a time
+FF08 <- countSitePlotDayWnoisenight %>% 
+    dplyr::filter(str_detect(SitePlot, "FF08")) %>% 
+    droplevels()
+
+p <-  ggplot(
+  data = FF08,  
+ aes(x=night, y=SitePlot, fill=n)) +
+      geom_tile() +
+      scale_fill_viridis(discrete=FALSE) +
+      theme_ipsum() +
+      ggtitle("All recordings for all SitePlots, including noise files")
+p # Exported 
+
+## Now with plot_ly 
+pp <- ggplotly(p)
+pp
+
+
+# One Site at a time
+FF09 <- countSitePlotDayWnoisenight %>% 
+    dplyr::filter(str_detect(SitePlot, "FF09")) %>% 
+    droplevels()
+
+p <-  ggplot(
+  data = FF09,  
+ aes(x=night, y=SitePlot, fill=n)) +
+      geom_tile() +
+      scale_fill_viridis(discrete=FALSE) +
+      theme_ipsum() +
+      ggtitle("All recordings for all SitePlots, including noise files")
+p # Exported 
+
+## Now with plot_ly 
+pp <- ggplotly(p)
+pp
+
+# One Site at a time
+FF10 <- countSitePlotDayWnoisenight %>% 
+    dplyr::filter(str_detect(SitePlot, "FF10")) %>% 
+    droplevels()
+
+p <-  ggplot(
+  data = FF10,  
+ aes(x=night, y=SitePlot, fill=n)) +
+      geom_tile() +
+      scale_fill_viridis(discrete=FALSE) +
+      theme_ipsum() +
+      ggtitle("All recordings for all SitePlots, including noise files")
+p # Exported 
+
+## Now with plot_ly 
+pp <- ggplotly(p)
+pp
+
+# One Site at a time
+FF11 <- countSitePlotDayWnoisenight %>% 
+    dplyr::filter(str_detect(SitePlot, "FF11")) %>% 
+    droplevels()
+
+p <-  ggplot(
+  data = FF11,  
+ aes(x=night, y=SitePlot, fill=n)) +
+      geom_tile() +
+      scale_fill_viridis(discrete=FALSE) +
+      theme_ipsum() +
+      ggtitle("All recordings for all SitePlots, including noise files")
+p # Exported 
+
+## Now with plot_ly 
+pp <- ggplotly(p)
+pp
+
+```
+

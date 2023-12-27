@@ -902,10 +902,50 @@ DF3 <- DF2 %>%
                                tz = "Europe/Berlin")) %>% 
   mutate(guild = factor(guild)) 
 
+### Fix the SitePlot Issues 
+
+DF4 <- DF3 %>% 
+  select(-c(SitePlotYear, SitePlot, PlotType, year)) %>%
+  mutate(year = as.factor(year(DF3$DATE))) 
+
+DF4$fix.file <- gsub("VEMUROOFTOP", "S4U10137", DF4$file.name)
+
+DF4.5 <- DF4 %>% dplyr::mutate(Detector =substr(fix.file, 1,8)) 
+
+DF4.5$detector.year <- paste0(DF4.5$Detector, "_", DF4.5$year)
+  
+detectors2 <- detectors1 %>% rename(SitePlot = "Site ID")  
+
+DF4.6 <- left_join(DF4.5, detectors2)
+
+DF4.7 <- DF4.6   %>%  mutate(PlotType = case_when(
+  str_detect(SitePlot, "-OB") ~ "Open",
+  str_detect(SitePlot, "-CB") ~ "Canopy", 
+  str_detect(SitePlot, "-IB") ~ "Interior")) %>% 
+  mutate(SitePlot = factor(SitePlot)) %>% 
+  mutate(Site = factor(substr(SitePlot, 1,4))) %>% 
+  mutate(detector.year = factor(detector.year)) %>% 
+  mutate(PlotType = factor(PlotType)) %>% 
+  mutate(Detector = factor(Detector)) %>% 
+  select(-MATCH.RATIO) %>% 
+  mutate(guild = case_when(
+    manual.id %in% c("PAUR",  "MYOT") ~ "SRE",
+    manual.id %in% c("PINA",  "PIPY", "MR1") ~ "MRE",
+    manual.id %in% c("EPNI",  "LR1",   "LR2", "NYNO") ~ "LRE",
+    manual.id == "NoID" ~ "NoID",
+    manual.id == "Noise" ~ "Noise")) 
+
+levels(DF4.7$manual.id)
+summary(DF4.7)
+table(DF4.7$detector.year)
+table(DF4.7$PlotType)
 
 #write.csv(DF3, file = file.path(output_today, "ManualAnalaysis21_22_combined_datetime_fixed_troubleshooting_gaps.csv"))
 
-# 15.12.2023
+#write.csv(DF4.7, file = file.path(output_today, "ManualAnalaysis21_22_combined_datetime_PlotType_Guild.csv"))
+# 108989 of 22 
+
+# 27.12.2023
 
 ```
 
@@ -953,28 +993,7 @@ aFF22 <- aFF %>% filter(year == 2022 & auto.id != "Noise") %>% droplevels() # 19
 ## Make an experimental categorical variable for different times in the summer
 
 
-### Fix the SitePlot Issues 
 
-DF4 <- DF3 %>% 
-  select(-c(SitePlotYear, SitePlot, PlotType, year)) %>%
-  mutate(year = as.factor(year(DF3$DATE))) 
-
-DF4$fix.file <- gsub("VEMUROOFTOP", "S4U10137", DF4$file.name)
-
-DF4.5 <- DF4 %>% dplyr::mutate(Detector =substr(fix.file, 1,8)) 
-
-DF4.5$detector.year <- paste0(DF4.5$Detector, "_", DF4.5$year)
-  
-detectors2 <- detectors1 %>% rename(SitePlot = "Site ID")  
-
-DF4.6 <- left_join(DF4.5, detectors2)
-
-DF4.7 <- DF4.6   %>%  mutate(PlotType = case_when(
-  str_detect(SitePlot, "-OB") ~ "Open",
-  str_detect(SitePlot, "-CB") ~ "Canopy", 
-  str_detect(SitePlot, "-IB") ~ "Interior")) %>% 
-  mutate(SitePlot = factor(SitePlot)) %>% 
-  mutate(Site = factor(substr(SitePlot, 1,4))) 
 
 mFF <- DF4.7
 table(mFF$Site)
