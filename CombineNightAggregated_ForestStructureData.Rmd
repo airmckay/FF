@@ -1,0 +1,76 @@
+---
+title: "CombineNightAggregated_ForestStructureData"
+output: html_document
+date: "2023-12-28"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+
+```{r}
+
+library(data.table)
+library(tidyverse)
+library(beepr)
+library(lubridate)
+library(purrr)
+library(janitor)
+#renv::install("rstudio/renv")
+library(renv)
+library(stringr)
+library(beepr)
+library(kableExtra)
+library(papeR)
+library(skimr)
+library(vtable)
+library(ggdark)
+library(RColorBrewer)
+library(cowplot)
+library(readxl)
+library(readr)
+
+## Setup output directory 
+output <- "C:/Users/apmc/OneDrive - Norwegian University of Life Sciences/3. Follo Forest 2021-2023/Manuscripts/Analyses/Outputs"
+
+file.name <- "BatData_Aggregate_ZeroInsert"
+
+todays_date <- Sys.Date()
+ 
+dir.name <- str_c(output,"/", file.name, "_", todays_date)
+dir.name
+ 
+output_today <- dir.name
+output_today
+
+dir.create(output_today)
+output_today
+## "C:/Users/apmc/OneDrive - Norwegian University of Life Sciences/3. Follo Forest 2021-2023/Manuscripts/Analyses/Outputs/BatData_Aggregate_ZeroInsert_2023-12-27"
+
+## Nightly aggregated for all manual acoustic analysis 
+bats <- read_csv("C:/Users/apmc/OneDrive - Norwegian University of Life Sciences/3. Follo Forest 2021-2023/Manuscripts/Analyses/Inputs/FF_2021-2022_NightAggregated_SRE_OpenPlot_Only.csv", 
+     col_types = cols(...1 = col_skip()))
+
+
+sre.ob <- read_csv("C:/Users/apmc/OneDrive - Norwegian University of Life Sciences/3. Follo Forest 2021-2023/Manuscripts/Analyses/Inputs/FF_2021-2022_NightAggregated_AllSREmid_subsetnonSREmid.csv", 
+     col_types = cols(...1 = col_skip()))
+
+hem22 <- read_excel("C:/Users/apmc/OneDrive - Norwegian University of Life Sciences/3. Follo Forest 2021-2023/Manuscripts/Analyses/Hemisphere Photos/HemipsherePhotos22_analysis/Outputs/DATE_output/27.10.2022_HemiphotOutput.65_2022_final.xlsx")
+
+hem21 <- read_excel("C:/Users/apmc/OneDrive - Norwegian University of Life Sciences/3. Follo Forest 2021-2023/Manuscripts/Analyses/Hemisphere Photos/HemipsherePhotos22_analysis/Outputs/DATE_output/27.10.2022_HemiphotOutput.65_2021_final.xlsx")
+
+forestplots21 <- read_delim("C:/Users/apmc/OneDrive - Norwegian University of Life Sciences/3. Follo Forest 2021-2023/Manuscripts/Analyses/ForesetInventoryData/2021/forestplots1.csv",     delim = ";", escape_double = FALSE, trim_ws = TRUE)
+
+BasalArea21 <- read_delim("C:/Users/apmc/OneDrive - Norwegian University of Life Sciences/3. Follo Forest 2021-2023/Manuscripts/Analyses/ForesetInventoryData/2021/Basal area summary 2021 (1).csv", 
+     delim = ";", escape_double = FALSE, trim_ws = TRUE)
+
+forestplots22 <- read_excel("C:/Users/apmc/OneDrive - Norwegian University of Life Sciences/3. Follo Forest 2021-2023/Manuscripts/Analyses/ForesetInventoryData/2022/ForestPlots_2022_edited.xlsx")
+
+BasalArea22 <- read_excel("C:/Users/apmc/OneDrive - Norwegian University of Life Sciences/3. Follo Forest 2021-2023/Manuscripts/Analyses/ForesetInventoryData/2022/BasalArea_2022.xlsx")
+
+
+
+```
+
