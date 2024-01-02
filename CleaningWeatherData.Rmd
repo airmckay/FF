@@ -1,0 +1,691 @@
+---
+title: "CleaningWeatherData"
+output: html_document
+date: "2024-01-02"
+---
+# Goals: 
+
+- Trim all TOMST soil logger data site specific for each season
+- Night aggregated TOMST soil logger data (night = 19:20 pm day 1 - 07:00 day 2)
+
+_For more info on soil loggers, read here:_ 
+_https://tomst.com/web/wp-content/uploads/2023/06/Lolly-software-Handbook.pdf_ 
+
+- Combine with precipitation data 
+
+
+```{r}
+library(data.table)
+library(tidyverse)
+library(beepr)
+library(lubridate)
+library(purrr)
+library(janitor)
+#renv::install("rstudio/renv")
+library(renv)
+library(stringr)
+library(beepr)
+library(kableExtra)
+library(papeR)
+library(skimr)
+library(vtable)
+library(ggdark)
+library(RColorBrewer)
+library(cowplot)
+library(readxl)
+library(readr)
+
+## Setup output directory 
+output <- "C:/Users/apmc/OneDrive - Norwegian University of Life Sciences/3. Follo Forest 2021-2023/Manuscripts/Analyses/Outputs"
+
+file.name <- "CleaningWeatherData"
+
+todays_date <- Sys.Date()
+ 
+dir.name <- str_c(output,"/", file.name, "_", todays_date)
+dir.name
+ 
+output_today <- dir.name
+output_today
+
+dir.create(output_today)
+output_today
+## "C:/Users/apmc/OneDrive - Norwegian University of Life Sciences/3. Follo Forest 2021-2023/Manuscripts/Analyses/Outputs/CleaningWeatherData_2024-01-02
+
+```
+
+## 2021 soil logger data 
+```{r}
+
+input_loggers <- "C:/Users/apmc/OneDrive - Norwegian University of Life Sciences/3. Follo Forest 2021-2023/2021/Data/Soil Loggers/soil moisture TOMST Lolly data/soil moist temp time pruned to observ period/PruneToSurveyPeriod"
+
+################################################################################
+#### FF01 
+################################################################################
+
+data_94214056_0_FF01 <- read_delim("data_94214056_0_FF01.csv", 
+     delim = ";", escape_double = FALSE, col_names = FALSE, 
+     col_types = cols(`0` = col_skip(), ...10 = col_skip(), 
+         X8 = col_skip(), X9 = col_skip(), X10 = col_skip()), 
+     trim_ws = TRUE) 
+
+data_FF01 <- as.data.frame(data_94214056_0_FF01) 
+
+colnames(data_FF01) <- c("SerialNo", "DateTime", "TimeZone", "T1", "T2", "T3", "SoilMoisture") 
+
+data_FF01$Site <- "FF01"
+data_FF01$datetime <- strptime(data_FF01$DateTime, 
+                                 format = "%Y.%m.%d %H:%M") 
+
+data_FF01_2021 <- data_FF01 %>%
+                    select(-DateTime) %>% 
+                    filter(datetime > as.POSIXlt("2021.06.30 15:40", 
+                                                 format = "%Y.%m.%d %H:%M") &
+                           datetime < as.POSIXlt("2021.09.06 12:20",
+                                                 format = "%Y.%m.%d %H:%M"))
+
+################################################################################
+#### FF02
+################################################################################
+
+data_94214057_0_FF02 <- read_delim("data_94214057_0_FF02.csv", 
+     delim = ";", escape_double = FALSE, col_names = FALSE, 
+     col_types = cols(`0` = col_skip(), ...10 = col_skip(), 
+         X8 = col_skip(), X9 = col_skip(), X10 = col_skip()), 
+     trim_ws = TRUE) 
+
+data_FF02 <- as.data.frame(data_94214057_0_FF02) 
+
+colnames(data_FF02) <- c("SerialNo", "DateTime", "TimeZone", "T1", "T2", "T3", "SoilMoisture") 
+
+data_FF02$Site <- "FF02"
+data_FF02$datetime <- strptime(data_FF02$DateTime, 
+                                 format = "%Y.%m.%d %H:%M") 
+
+data_FF02_2021 <- data_FF02 %>%
+                    select(-DateTime) %>% 
+                    filter(datetime > as.POSIXlt("2021.06.30 13:40", 
+                                                 format = "%Y.%m.%d %H:%M") &
+                           datetime < as.POSIXlt("2021.08.31 12:50",
+                                                 format = "%Y.%m.%d %H:%M"))
+
+################################################################################
+#### FF03 
+################################################################################
+
+data_94214051_0_FF03 <- read_delim("data_94214051_0_FF03.csv", 
+     delim = ";", escape_double = FALSE, col_names = FALSE, 
+     col_types = cols(`0` = col_skip(), ...10 = col_skip(), 
+         X8 = col_skip(), X9 = col_skip(), X10 = col_skip()), 
+     trim_ws = TRUE) 
+
+data_FF03 <- as.data.frame(data_94214051_0_FF03) 
+
+colnames(data_FF03) <- c("SerialNo", "DateTime", "TimeZone", "T1", "T2", "T3", "SoilMoisture") 
+
+data_FF03$Site <- "FF03"
+data_FF03$datetime <- strptime(data_FF03$DateTime, 
+                                 format = "%Y.%m.%d %H:%M") 
+
+data_FF03_2021 <- data_FF03 %>%
+                    select(-DateTime) %>% 
+                    filter(datetime > as.POSIXlt("2021.06.27 17:00", 
+                                                 format = "%Y.%m.%d %H:%M") &
+                           datetime < as.POSIXlt("2021.08.30 10:50",
+                                                 format = "%Y.%m.%d %H:%M"))
+
+################################################################################  
+#### FF04
+################################################################################
+
+data_94214061_0_FF04 <- read_delim("data_94214061_0_FF04.csv", 
+     delim = ";", escape_double = FALSE, col_names = FALSE, 
+     col_types = cols(`0` = col_skip(), ...10 = col_skip(), 
+         X8 = col_skip(), X9 = col_skip(), X10 = col_skip()), 
+     trim_ws = TRUE) 
+
+data_FF04 <- as.data.frame(data_94214061_0_FF04) 
+
+colnames(data_FF04) <- c("SerialNo", "DateTime", "TimeZone", "T1", "T2", "T3", "SoilMoisture") 
+
+data_FF04$Site <- "FF04"
+data_FF04$datetime <- strptime(data_FF04$DateTime, 
+                                 format = "%Y.%m.%d %H:%M") 
+
+data_FF04_2021 <- data_FF04 %>%
+                    select(-DateTime) %>% 
+                    filter(datetime > as.POSIXlt("2021.06.27 10:30", 
+                                                 format = "%Y.%m.%d %H:%M") &
+                           datetime < as.POSIXlt("2021.08.30 12:50",
+                                                 format = "%Y.%m.%d %H:%M"))
+
+################################################################################  
+#### FF045
+################################################################################
+
+data_94214054_0_FF05 <- read_delim("data_94214054_0_FF05.csv", 
+     delim = ";", escape_double = FALSE, col_names = FALSE, 
+     col_types = cols(`0` = col_skip(), ...10 = col_skip(), 
+         X8 = col_skip(), X9 = col_skip(), X10 = col_skip()), 
+     trim_ws = TRUE) 
+
+data_FF05 <- as.data.frame(data_94214054_0_FF05) 
+
+colnames(data_FF05) <- c("SerialNo", "DateTime", "TimeZone", "T1", "T2", "T3", "SoilMoisture") 
+
+data_FF05$Site <- "FF05"
+data_FF05$datetime <- strptime(data_FF05$DateTime, 
+                                 format = "%Y.%m.%d %H:%M") 
+
+data_FF05_2021 <- data_FF05 %>%
+                    select(-DateTime) %>% 
+                    filter(datetime > as.POSIXlt("2021.06.27 11:50", 
+                                                 format = "%Y.%m.%d %H:%M") &
+                           datetime < as.POSIXlt("2021.08.31 14:30",
+                                                 format = "%Y.%m.%d %H:%M"))
+
+################################################################################  
+#### FF06
+################################################################################
+data_94214053_0_FF06 <- read_delim("data_94214053_0_FF06.csv", 
+     delim = ";", escape_double = FALSE, col_names = FALSE, 
+     col_types = cols(`0` = col_skip(), ...10 = col_skip(), 
+         X8 = col_skip(), X9 = col_skip(), X10 = col_skip()), 
+     trim_ws = TRUE) 
+
+data_FF06 <- as.data.frame(data_94214053_0_FF06) 
+
+colnames(data_FF06) <- c("SerialNo", "DateTime", "TimeZone", "T1", "T2", "T3", "SoilMoisture") 
+
+data_FF06$Site <- "FF06"
+data_FF06$datetime <- strptime(data_FF06$DateTime, 
+                                 format = "%Y.%m.%d %H:%M") 
+
+data_FF06_2021 <- data_FF06 %>%
+                    select(-DateTime) %>% 
+                    filter(datetime > as.POSIXlt("2021.06.28 16:00", 
+                                                 format = "%Y.%m.%d %H:%M") &
+                           datetime < as.POSIXlt("2021.09.07 13:00",
+                                                 format = "%Y.%m.%d %H:%M"))
+
+################################################################################  
+#### FF07
+################################################################################
+
+data_94214058_0_FF07 <- read_delim("data_94214058_0_FF07.csv", 
+     delim = ";", escape_double = FALSE, col_names = FALSE, 
+     col_types = cols(`0` = col_skip(), ...10 = col_skip(), 
+         X8 = col_skip(), X9 = col_skip(), X10 = col_skip()), 
+     trim_ws = TRUE) 
+
+data_FF07 <- as.data.frame(data_94214058_0_FF07) 
+
+colnames(data_FF07) <- c("SerialNo", "DateTime", "TimeZone", "T1", "T2", "T3", "SoilMoisture") 
+
+data_FF07$Site <- "FF07"
+data_FF07$datetime <- strptime(data_FF07$DateTime, 
+                                 format = "%Y.%m.%d %H:%M") 
+
+data_FF07_2021 <- data_FF07 %>%
+                    select(-DateTime) %>% 
+                    filter(datetime > as.POSIXlt("2021.06.28 17:50", 
+                                                 format = "%Y.%m.%d %H:%M") &
+                           datetime < as.POSIXlt("2021.09.02 20:40",
+                                                 format = "%Y.%m.%d %H:%M"))
+
+################################################################################  
+#### FF08
+################################################################################
+
+data_94214060_0_FF08 <- read_delim("data_94214060_0_FF08.csv", 
+     delim = ";", escape_double = FALSE, col_names = FALSE, 
+     col_types = cols(`0` = col_skip(), ...10 = col_skip(), 
+         X8 = col_skip(), X9 = col_skip(), X10 = col_skip()), 
+     trim_ws = TRUE) 
+
+data_FF08 <- as.data.frame(data_94214060_0_FF08) 
+
+colnames(data_FF08) <- c("SerialNo", "DateTime", "TimeZone", "T1", "T2", "T3", "SoilMoisture") 
+
+data_FF08$Site <- "FF08"
+data_FF08$datetime <- strptime(data_FF08$DateTime, 
+                                 format = "%Y.%m.%d %H:%M") 
+
+data_FF08_2021 <- data_FF08 %>%
+                    select(-DateTime) %>% 
+                    filter(datetime > as.POSIXlt("2021.06.28 13:20", 
+                                                 format = "%Y.%m.%d %H:%M") &
+                           datetime < as.POSIXlt("2021.09.07 11:20",
+                                                 format = "%Y.%m.%d %H:%M"))
+
+################################################################################
+
+################################################################################  
+#### FF09
+################################################################################
+
+data_94214064_0_FF09 <- read_delim("data_94214064_0_FF09.csv", 
+     delim = ";", escape_double = FALSE, col_names = FALSE, 
+     col_types = cols(`0` = col_skip(), ...10 = col_skip(), 
+         X8 = col_skip(), X9 = col_skip(), X10 = col_skip()), 
+     trim_ws = TRUE) 
+
+data_FF09 <- as.data.frame(data_94214064_0_FF09) 
+
+colnames(data_FF09) <- c("SerialNo", "DateTime", "TimeZone", "T1", "T2", "T3", "SoilMoisture") 
+
+data_FF09$Site <- "FF09"
+data_FF09$datetime <- strptime(data_FF09$DateTime, 
+                                 format = "%Y.%m.%d %H:%M") 
+
+data_FF09_2021 <- data_FF09 %>%
+                    select(-DateTime) %>% 
+                    filter(datetime > as.POSIXlt("2021.06.28 14:50", 
+                                                 format = "%Y.%m.%d %H:%M") &
+                           datetime < as.POSIXlt("2021.08.30 14:50",
+                                                 format = "%Y.%m.%d %H:%M"))
+
+################################################################################
+
+################################################################################  
+#### FF10
+################################################################################
+
+data_94214059_0_FF10 <- read_delim("data_94214059_0_FF10.csv", 
+     delim = ";", escape_double = FALSE, col_names = FALSE, 
+     col_types = cols(`0` = col_skip(), ...10 = col_skip(), 
+         X8 = col_skip(), X9 = col_skip(), X10 = col_skip()), 
+     trim_ws = TRUE) 
+
+data_FF10 <- as.data.frame(data_94214059_0_FF10) 
+
+colnames(data_FF10) <- c("SerialNo", "DateTime", "TimeZone", "T1", "T2", "T3", "SoilMoisture") 
+
+data_FF10$Site <- "FF10"
+data_FF10$datetime <- strptime(data_FF10$DateTime, 
+                                 format = "%Y.%m.%d %H:%M") 
+
+data_FF10_2021 <- data_FF10 %>%
+                    select(-DateTime) %>% 
+                    filter(datetime > as.POSIXlt("2021.06.27 18:40", 
+                                                 format = "%Y.%m.%d %H:%M") &
+                           datetime < as.POSIXlt("2021.08.31 11:00",
+                                                 format = "%Y.%m.%d %H:%M"))
+
+################################################################################
+
+################################################################################  
+#### FF11
+################################################################################
+
+data_94214065_0_FF11 <- read_delim("data_94214065_0_FF11.csv", 
+     delim = ";", escape_double = FALSE, col_names = FALSE, 
+     col_types = cols(`0` = col_skip(), ...10 = col_skip(), 
+         X8 = col_skip(), X9 = col_skip(), X10 = col_skip()), 
+     trim_ws = TRUE) 
+
+data_FF11 <- as.data.frame(data_94214065_0_FF11) 
+
+colnames(data_FF11) <- c("SerialNo", "DateTime", "TimeZone", "T1", "T2", "T3", "SoilMoisture") 
+
+data_FF11$Site <- "FF11"
+data_FF11$datetime <- strptime(data_FF11$DateTime, 
+                                 format = "%Y.%m.%d %H:%M") 
+
+data_FF11_2021 <- data_FF11 %>%
+                    select(-DateTime) %>% 
+                    filter(datetime > as.POSIXlt("2021.06.30 14:30", 
+                                                 format = "%Y.%m.%d %H:%M") &
+                           datetime < as.POSIXlt("2021.09.06 11:14",
+                                                 format = "%Y.%m.%d %H:%M"))
+
+
+################################################################################  
+#### FF12
+################################################################################
+
+data_94214052_0_FF12 <- read_delim("data_94214052_0_FF12.csv", 
+     delim = ";", escape_double = FALSE, col_names = FALSE, 
+     col_types = cols(`0` = col_skip(), ...10 = col_skip(), 
+         X8 = col_skip(), X9 = col_skip(), X10 = col_skip()), 
+     trim_ws = TRUE) 
+
+data_FF12 <- as.data.frame(data_94214052_0_FF12) 
+
+colnames(data_FF12) <- c("SerialNo", "DateTime", "TimeZone", "T1", "T2", "T3", "SoilMoisture") 
+
+data_FF12$Site <- "FF12"
+data_FF12$datetime <- strptime(data_FF12$DateTime, 
+                                 format = "%Y.%m.%d %H:%M") 
+
+data_FF12_2021 <- data_FF12 %>%
+                    select(-DateTime) %>% 
+                    filter(datetime > as.POSIXlt("2021.06.27 15:00", 
+                                                 format = "%Y.%m.%d %H:%M") &
+                           datetime < as.POSIXlt("2021.09.02 22:50",
+                                                 format = "%Y.%m.%d %H:%M"))
+
+################################################################################
+pruned_loggers_2021_list <- list(data_FF01_2021, data_FF02_2021, data_FF03_2021,
+                              data_FF04_2021, data_FF05_2021, data_FF06_2021,
+                              data_FF07_2021, data_FF08_2021, data_FF09_2021,
+                              data_FF10_2021, data_FF11_2021, data_FF12_2021)
+
+do.call("rbind", listOfDataFrames)
+big_loggers_21 <- do.call("rbind", pruned_loggers_2021_list)
+log21df <- big_loggers_21 %>% mutate(Site = factor(Site))
+summary(log21df$Site)
+
+
+# dir.create("C:/Users/apmc/OneDrive - Norwegian University of Life Sciences/3. Follo Forest 2021-2023/2021/Data/Soil Loggers/soil moisture TOMST Lolly data/soil moist temp time pruned to observ period/PruneToSurveyPeriod/outputs")
+# 
+# write.csv(log21df, "C:/Users/apmc/OneDrive - Norwegian University of Life Sciences/3. Follo Forest 2021-2023/2021/Data/Soil Loggers/soil moisture TOMST Lolly data/soil moist temp time pruned to observ period/PruneToSurveyPeriod/outputs/raw_loggerdata_combined.csv") 
+
+log21df <- log21df %>% select(-c(TimeZone, SerialNo))
+```
+
+
+ Back up code for alternative process: 
+################################################################################
+################################################################################
+# raw_loggers <- list.files(path=input_loggers, 
+#                           pattern=".csv", 
+#                           full.names = T,
+#                           include.dirs = TRUE) %>% 
+#                lapply(read.csv, header = FALSE, sep = ";")
+# big_loggers <- rbindlist(raw_loggers, fill = TRUE)
+# 
+# colnames(big_loggers) <- c("SerialNo", "DateTime", "TimeZone", "T1", "T2", "T3", "SoilMoisture", "Shake", "zero", "drop") 
+# 
+# loggers <- big_loggers %>% select(-c(zero, drop)) %>% 
+#   mutate(Site = case_when(
+#     
+#   ))
+# 
+# write.csv(loggers, file = file.path(input_loggers, "raw_loggerdata_combined.csv")) 
+## Housekeeping
+
+
+
+## 2022 soil logger data 
+```{r}
+
+log22df <- read_csv("C:/Users/apmc/OneDrive - Norwegian University of Life Sciences/3. Follo Forest 2021-2023/2022/Data/Soil sensors/Soil Moisture TSM4 2022 raw data/FolloForest2022_SoilMoistureData_RawReads_AllSites.csv", 
+     col_types = cols(...1 = col_skip(), Easting = col_skip(), 
+         Northing = col_skip()))
+
+log22df <- log22df %>% 
+  rename(SoilMoisture = PercVol) %>% 
+  select(-c(n_site_reading, Hu)) %>% 
+  mutate(Site = factor(Site))
+
+summary
+
+```
+
+## Merge soil logger data and then make night aggregated 
+```{r}
+logdf <- full_join(log21df, log22df)
+summary(logdf)
+
+summary(logdf$Site) 
+# 308130 obs
+#write.csv(logdf, file = file.path(output_today, "AllSoilMoistureData_pruned_2021_2022.csv")) 
+# 02.01.2024
+
+# Only keep values between 17:00 - 00:00 and 00:00-08:00
+logdf1 <- logdf %>% mutate(time = format(as.POSIXct(datetime), format = "%H:%M:%S")) 
+logdf1$time <- lubridate::hms(logdf1$time)
+logdf1$hour <- hour(logdf1$time) 
+logdf2 <- logdf1 %>% filter(hour < 9 | hour > 16) 
+# 205587 obs 
+
+# Check that this worked 
+hist(logdf2$hour)
+hist(logdf1$hour)
+
+## Now create an HOUR.12 column 
+logdf2$nighttime <- logdf2$datetime - 12*60*60
+logdf2$time.12 <- lubridate::hms(format(as.POSIXct(logdf2$nighttime), format = "%H:%M:%S"))
+logdf2$hour.12 <- hour(logdf2$time.12)
+logdf2$night <- as.Date(logdf2$nighttime)
+
+#write.csv(logdf2, file = file.path(output_today, "AllSoilMoistureData_pruned_2021_2022_nighttime.csv")) 
+# 02.01.2024
+# 205587 obs 12 vars 
+
+## Aggregate to night 
+
+log.n <- logdf2 %>% group_by(night, Site) %>% 
+  dplyr::summarize(T1 = mean(T1),
+                   T2 = mean(T2), 
+                   T3 = mean(T3), 
+                   SoilMoisture = mean(SoilMoisture)) 
+summary(log.n)
+summary(logdf2)
+
+tz(log.n) <- "Europe/Berlin"
+
+#write.csv(log.n, file = file.path(output_today, "AllSoilMoistureData__2021_2022_aggregate_night.csv")) 
+# 02.01.2024
+# 2168 obs 12 vars 
+```
+
+## Prepare Temperature data 
+```{r}
+
+FF01_temp <- read_delim("C:/Users/apmc/OneDrive - Norwegian University of Life Sciences/3. Follo Forest 2021-2023/weather data seNorge/seNorge precipitation and temperature/SeNorge temp downloaded 11-12-2023/FF01 temp.csv", 
+     delim = ";", escape_double = FALSE, trim_ws = TRUE, 
+     skip = 1)
+FF01_temp$Site <- "FF01"
+
+FF02_temp <- read_delim("C:/Users/apmc/OneDrive - Norwegian University of Life Sciences/3. Follo Forest 2021-2023/weather data seNorge/seNorge precipitation and temperature/SeNorge temp downloaded 11-12-2023/FF02 temp.csv", 
+     delim = ";", escape_double = FALSE, trim_ws = TRUE, 
+     skip = 1)
+FF02_temp$Site <- "FF02"
+
+FF03_temp <- read_delim("C:/Users/apmc/OneDrive - Norwegian University of Life Sciences/3. Follo Forest 2021-2023/weather data seNorge/seNorge precipitation and temperature/SeNorge temp downloaded 11-12-2023/FF03 temp.csv", 
+     delim = ";", escape_double = FALSE, trim_ws = TRUE, 
+     skip = 1)
+FF03_temp$Site <- "FF03"
+
+FF04_temp <- read_delim("C:/Users/apmc/OneDrive - Norwegian University of Life Sciences/3. Follo Forest 2021-2023/weather data seNorge/seNorge precipitation and temperature/SeNorge temp downloaded 11-12-2023/FF04 temp.csv", 
+     delim = ";", escape_double = FALSE, trim_ws = TRUE, 
+     skip = 1)
+FF04_temp$Site <- "FF04"
+
+FF05_temp <- read_delim("C:/Users/apmc/OneDrive - Norwegian University of Life Sciences/3. Follo Forest 2021-2023/weather data seNorge/seNorge precipitation and temperature/SeNorge temp downloaded 11-12-2023/FF05 temp.csv", 
+     delim = ";", escape_double = FALSE, trim_ws = TRUE, 
+     skip = 1)
+FF05_temp$Site <- "FF05"
+
+FF06_temp <- read_delim("C:/Users/apmc/OneDrive - Norwegian University of Life Sciences/3. Follo Forest 2021-2023/weather data seNorge/seNorge precipitation and temperature/SeNorge temp downloaded 11-12-2023/FF06 temp.csv", 
+     delim = ";", escape_double = FALSE, trim_ws = TRUE, 
+     skip = 1)
+FF06_temp$Site <- "FF06"
+
+FF07_temp <- read_delim("C:/Users/apmc/OneDrive - Norwegian University of Life Sciences/3. Follo Forest 2021-2023/weather data seNorge/seNorge precipitation and temperature/SeNorge temp downloaded 11-12-2023/FF07 temp.csv", 
+     delim = ";", escape_double = FALSE, trim_ws = TRUE, 
+     skip = 1)
+FF07_temp$Site <- "FF07"
+
+FF08_temp <- read_delim("C:/Users/apmc/OneDrive - Norwegian University of Life Sciences/3. Follo Forest 2021-2023/weather data seNorge/seNorge precipitation and temperature/SeNorge temp downloaded 11-12-2023/FF08 temp.csv", 
+     delim = ";", escape_double = FALSE, trim_ws = TRUE, 
+     skip = 1)
+FF08_temp$Site <- "FF08"
+
+FF09_temp <- read_delim("C:/Users/apmc/OneDrive - Norwegian University of Life Sciences/3. Follo Forest 2021-2023/weather data seNorge/seNorge precipitation and temperature/SeNorge temp downloaded 11-12-2023/FF09 temp.csv", 
+     delim = ";", escape_double = FALSE, trim_ws = TRUE, 
+     skip = 1)
+FF09_temp$Site <- "FF09"
+
+FF10_temp <- read_delim("C:/Users/apmc/OneDrive - Norwegian University of Life Sciences/3. Follo Forest 2021-2023/weather data seNorge/seNorge precipitation and temperature/SeNorge temp downloaded 11-12-2023/FF10 temp.csv", 
+     delim = ";", escape_double = FALSE, trim_ws = TRUE, 
+     skip = 1)
+FF10_temp$Site <- "FF10"
+
+FF11_temp <- read_delim("C:/Users/apmc/OneDrive - Norwegian University of Life Sciences/3. Follo Forest 2021-2023/weather data seNorge/seNorge precipitation and temperature/SeNorge temp downloaded 11-12-2023/FF11 temp.csv", 
+     delim = ";", escape_double = FALSE, trim_ws = TRUE, 
+     skip = 1)
+FF11_temp$Site <- "FF11"
+
+FF12_temp <- read_delim("C:/Users/apmc/OneDrive - Norwegian University of Life Sciences/3. Follo Forest 2021-2023/weather data seNorge/seNorge precipitation and temperature/SeNorge temp downloaded 11-12-2023/FF12 temp.csv", 
+     delim = ";", escape_double = FALSE, trim_ws = TRUE, 
+     skip = 1) 
+FF12_temp$Site <- "FF12"
+
+temp.list <- list(FF01_temp, FF02_temp, FF03_temp, 
+                  FF04_temp, FF05_temp, FF06_temp, 
+                  FF07_temp, FF08_temp, FF09_temp, 
+                  FF10_temp, FF11_temp, FF12_temp)
+
+bigtemp<- rbindlist(temp.list, fill = TRUE)
+bigtemp$datetime <- as.POSIXct(bigtemp$Date, format ="%d.%m.%Y %H:%M")
+tz(bigtemp$datetime) <- "Europe/Berlin"
+bigtemp$night <- as.Date(bigtemp$datetime)
+bigtemp$temperature <- bigtemp[,2]
+
+bigtemp21 <- bigtemp %>% dplyr::filter(between(
+  night, as.Date("2021-05-14", format = "%Y-%m-%d"), as.Date("2021-09-14"))) 
+
+ggplot(bigtemp21) + geom_smooth(aes(x = night, y = temperature)) + facet_wrap(~Site)
+
+bigtemp22 <- bigtemp %>% dplyr::filter(between(
+  night, as.Date("2022-05-04", format = "%Y-%m-%d"), as.Date("2022-09-21"))) %>% filter(Site != "FF12")
+
+ggplot(bigtemp22) + geom_smooth(aes(x = night, y = temperature)) + facet_wrap(~Site)
+
+bigtempdf <- full_join(bigtemp21, bigtemp22) # 3180
+names(bigtempdf)
+bigtempdf1 <- bigtempdf %>% select(Site, datetime, temperature, night) 
+# 3039 obs of 4 vars 
+#write.csv(bigtempdf1, file = file.path(output_today, "daily_temp_pruned_2021_2022.csv"))
+```
+
+
+## Prepare precipitation data 
+```{r}
+FF01_precip <- read_delim("C:/Users/apmc/OneDrive - Norwegian University of Life Sciences/3. Follo Forest 2021-2023/weather data seNorge/seNorge precipitation and temperature/seNorge precipitation downloaded 11-12-2023/FF01 precip.csv", 
+     delim = ",", escape_double = FALSE, trim_ws = TRUE)
+FF01_precip$Site <- "FF01"
+
+FF02_precip <- read_delim("C:/Users/apmc/OneDrive - Norwegian University of Life Sciences/3. Follo Forest 2021-2023/weather data seNorge/seNorge precipitation and temperature/seNorge precipitation downloaded 11-12-2023/FF02 precip.csv", 
+     delim = ",", escape_double = FALSE, trim_ws = TRUE)
+FF02_precip$Site <- "FF02"
+
+FF03_precip <- read_delim("C:/Users/apmc/OneDrive - Norwegian University of Life Sciences/3. Follo Forest 2021-2023/weather data seNorge/seNorge precipitation and temperature/seNorge precipitation downloaded 11-12-2023/FF03 precip.csv", 
+     delim = ",", escape_double = FALSE, trim_ws = TRUE)
+FF03_precip$Site <- "FF03"
+
+FF04_precip <- read_delim("C:/Users/apmc/OneDrive - Norwegian University of Life Sciences/3. Follo Forest 2021-2023/weather data seNorge/seNorge precipitation and temperature/seNorge precipitation downloaded 11-12-2023/FF04 precip.csv", 
+     delim = ",", escape_double = FALSE, trim_ws = TRUE)
+FF04_precip$Site <- "FF04"
+
+FF05_precip <- read_delim("C:/Users/apmc/OneDrive - Norwegian University of Life Sciences/3. Follo Forest 2021-2023/weather data seNorge/seNorge precipitation and temperature/seNorge precipitation downloaded 11-12-2023/FF05 precip.csv", 
+     delim = ",", escape_double = FALSE, trim_ws = TRUE)
+FF05_precip$Site <- "FF05"
+
+FF06_precip <- read_delim("C:/Users/apmc/OneDrive - Norwegian University of Life Sciences/3. Follo Forest 2021-2023/weather data seNorge/seNorge precipitation and temperature/seNorge precipitation downloaded 11-12-2023/FF06 precip.csv", 
+     delim = ",", escape_double = FALSE, trim_ws = TRUE)
+FF06_precip$Site <- "FF06"
+
+FF07_precip <- read_delim("C:/Users/apmc/OneDrive - Norwegian University of Life Sciences/3. Follo Forest 2021-2023/weather data seNorge/seNorge precipitation and temperature/seNorge precipitation downloaded 11-12-2023/FF07 precip.csv", 
+     delim = ",", escape_double = FALSE, trim_ws = TRUE)
+FF07_precip$Site <- "FF07"
+
+FF08_precip <- read_delim("C:/Users/apmc/OneDrive - Norwegian University of Life Sciences/3. Follo Forest 2021-2023/weather data seNorge/seNorge precipitation and temperature/seNorge precipitation downloaded 11-12-2023/FF08 precip.csv", 
+     delim = ",", escape_double = FALSE, trim_ws = TRUE)
+FF08_precip$Site <- "FF08"
+
+FF09_precip <- read_delim("C:/Users/apmc/OneDrive - Norwegian University of Life Sciences/3. Follo Forest 2021-2023/weather data seNorge/seNorge precipitation and temperature/seNorge precipitation downloaded 11-12-2023/FF09 precip.csv", 
+     delim = ",", escape_double = FALSE, trim_ws = TRUE)
+FF09_precip$Site <- "FF09"
+
+FF10_precip <- read_delim("C:/Users/apmc/OneDrive - Norwegian University of Life Sciences/3. Follo Forest 2021-2023/weather data seNorge/seNorge precipitation and temperature/seNorge precipitation downloaded 11-12-2023/FF10 precip.csv", 
+     delim = ",", escape_double = FALSE, trim_ws = TRUE)
+FF10_precip$Site <- "FF10"
+
+FF11_precip <- read_delim("C:/Users/apmc/OneDrive - Norwegian University of Life Sciences/3. Follo Forest 2021-2023/weather data seNorge/seNorge precipitation and temperature/seNorge precipitation downloaded 11-12-2023/FF11 precip.csv", 
+     delim = ",", escape_double = FALSE, trim_ws = TRUE)
+FF11_precip$Site <- "FF11"
+
+FF12_precip <- read_delim("C:/Users/apmc/OneDrive - Norwegian University of Life Sciences/3. Follo Forest 2021-2023/weather data seNorge/seNorge precipitation and temperature/seNorge precipitation downloaded 11-12-2023/FF12 precip.csv", 
+     delim = ",", escape_double = FALSE, trim_ws = TRUE) 
+FF12_precip$Site <- "FF12"
+
+precip.list <- list(FF01_precip, FF02_precip, FF03_precip, 
+                  FF04_precip, FF05_precip, FF06_precip, 
+                  FF07_precip, FF08_precip, FF09_precip, 
+                  FF10_precip, FF11_precip, FF12_precip)
+
+bigprecip<- rbindlist(precip.list, fill = TRUE)
+bigprecip$datetime <- as.POSIXct(bigprecip$Date, format ="%d.%m.%Y %H:%M")
+tz(bigprecip$datetime) <- "Europe/Berlin"
+bigprecip$night <- as.Date(bigprecip$datetime)
+bigprecip$rainfall <- bigprecip[,2]
+
+bigprecip21 <- bigprecip %>% dplyr::filter(between(
+  night, as.Date("2021-05-14", format = "%Y-%m-%d"), as.Date("2021-09-14"))) 
+
+ggplot(bigprecip21) + geom_smooth(aes(x = night, y = rainfall)) + facet_wrap(~Site)
+
+bigprecip22 <- bigprecip %>% dplyr::filter(between(
+  night, as.Date("2022-05-04", format = "%Y-%m-%d"), as.Date("2022-09-21"))) %>% filter(Site != "FF12")
+
+ggplot(bigprecip22) + geom_smooth(aes(x = night, y = rainfall)) + facet_wrap(~Site)
+
+bigprecipdf <- full_join(bigprecip21, bigprecip22) # 3180
+names(bigprecipdf)
+bigprecipdf1 <- bigprecipdf %>% select(Site, datetime, rainfall, night) 
+dim(bigprecipdf1)
+# 3039 obs of 4 vars 
+#write.csv(bigprecipdf1, file = file.path(output_today, "daily_precip_pruned_2021_2022.csv"))
+```
+
+
+## Combine se.norge datasets as well as tomst data 
+```{r}
+weather1 <- left_join(bigtempdf1, bigprecipdf1) 
+dim(weather1)
+names(weather1)
+weather1$Site <- factor(weather1$Site)
+# 3039    5
+#"Site"        "datetime"    "temperature" "night"       "rainfall"   
+
+#write.csv(weather1, file = file.path(output_today, "se.norge_precip_temp_combined_2021_2022.csv"))
+
+names(log.n)
+# "night"        "Site"         "T1"           "T2"           "T3"           "SoilMoisture"
+
+# Already checked both in Europe/Berlin TZ
+
+weather2 <- left_join(log.n, weather1)
+summary(weather2)
+dim(weather2)
+# 2168    9
+
+# Create site average moisture column 
+
+moist.site <- log.n %>% 
+  mutate(year = year(night),
+         site.year = factor(paste0(Site, "-", year))) %>% 
+  group_by(site.year) %>% dplyr::summarize(moist.site = mean(SoilMoisture))
+
+weather2$year <- year(weather2$night)
+weather2$site.year <- factor(paste0(weather2$Site, "-", weather2$year)) 
+  
+weather3 <- left_join(weather2, moist.site)
+summary(weather3)
+dim(weather3)
+# 2168   12
+names(weather3)
+ # [1] "night"        "Site"         "T1"           "T2"           "T3"           "SoilMoisture"
+ # [7] "datetime"     "temperature"  "rainfall"     "year"         "site.year"    "moist.site"
+
+# write.csv(weather3, file = file.path(output_today, "se.norge_precip_temp_combined_TOMST4_2021_2022.csv"))
+
+
+
+
+```
+
