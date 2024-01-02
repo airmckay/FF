@@ -684,8 +684,5 @@ names(weather3)
 
 # write.csv(weather3, file = file.path(output_today, "se.norge_precip_temp_combined_TOMST4_2021_2022.csv"))
 
-
-
-
 ```
 
