@@ -193,7 +193,7 @@ nbats1 %>% filter(batpass > 0) %>%
   ggplot(aes(x = night, y = batpass)) + 
   geom_point(alpha = 0.3) + facet_wrap(~SitePlot) + ylim(c(1,50))
 
-nbats1 %>% ggplot(aes(x = SitePlot, y = batpass, fill = behavior)) + geom_bar(stat = "identity") + facet_wrap(~manualid) + ylim(c(0,200)) 
+nbats1 %>% ggplot(aes(x = SitePlot, y = batpass, fill = behavior)) + geom_bar(stat = "identity") + facet_wrap(~manua.lid) + ylim(c(0,200)) 
 
 # Remnove 02.09.2021 data for FF7 and FF12 sites - detectors did not complete full night of recording. Were retrieved during night time. 
 
@@ -213,7 +213,7 @@ nbats_2021 <- nbats2
 bats_22 <- bats1 %>% filter(year == "2022") %>% droplevels()
 #57659 bat passes 
 
-batmap <- bats_22 %>% select(Site, SitePlot, SitePlotYear) %>% unique()
+batmap <- bats_22 %>% dplyr::select(Site, SitePlot, SitePlotYear) %>% unique()
 
 timemap <- bats_22 %>% dplyr::select(night) %>% distinct(night, .keep_all = TRUE) # 140 nights of survey (before adding in zero nights)
 
@@ -267,7 +267,7 @@ levels(temp3$SitePlotYear)
 temp3$active.night <- as.factor(temp3$active.night) # 
 
 summary(temp3$SitePlotYear)
-summary(temp3) # 160432     zeros introduced 
+summary(temp3) # 160432              zeros introduced 
 
 # reformat factor columns and then replace NA bat passes with zeros 
 nbats <- temp3 %>% 
@@ -277,7 +277,7 @@ nbats <- temp3 %>%
 nbats1 <- left_join(nbats, batmap, by = "SitePlotYear")
 summary(nbats1)
 dim(nbats1)
-# 160432    9
+# 173440          9
 
 # replace NAs with zeros 
 nbats1[is.na(nbats1)] <- 0 
@@ -324,8 +324,8 @@ names(batsdf)
 # reconnect the metadata 
 names(bats1)
 
-meta <- bats1 %>% select(SitePlotYear, PlotType, Detector) %>% unique()
-meta1 <- bats1 %>% select(manual.id, guild) %>% unique()
+meta <- bats1 %>% dplyr::select(SitePlotYear, PlotType, Detector) %>% unique()
+meta1 <- bats1 %>% dplyr::select(manual.id, guild) %>% unique()
 
 batsdf1 <- left_join(batsdf, meta)
 batsdf2 <- left_join(batsdf1, meta1)
@@ -350,6 +350,13 @@ summary(batsdf2)
 #####################################
 
 ```{r}
+summary(bats1$behavior)
+#      Both Commuting   Feeding    Social 
+#      148     83151     15342      7884 
+
+
+# Given how few bat passes have both feeding and social activity, I am going to merge down to three behavior levels and re-aggregate
+
 # Create new behavior column 
 batsx <- bats1 %>% mutate(behavior1 = case_when(
   behavior == "Commuting" ~ "Commuting", 
@@ -366,10 +373,10 @@ summary(batsx)
         ######### 2021 #########
 ###########################################
 
-bats_21 <- batsx %>% filter(year == "2021") %>% droplevels()
+bats_21 <- batsx %>% dplyr::filter(year == "2021") %>% droplevels()
 #48866 bat passes 
 
-batmap <- bats_21 %>% select(Site, SitePlot, SitePlotYear) %>% unique()
+batmap <- bats_21 %>% dplyr::select(Site, SitePlot, SitePlotYear) %>% unique()
 
 timemap <- bats_21 %>% dplyr::select(night) %>% distinct(night, .keep_all = TRUE) # 121 nights of survey (before adding in zero nights)
 
@@ -473,21 +480,21 @@ nbats_2021 <- nbats2
 bats_22 <- batsx %>% filter(year == "2022") %>% droplevels()
 #57659 bat passes 
 
-batmap <- bats_22 %>% select(Site, SitePlot, SitePlotYear) %>% unique()
+batmap <- bats_22 %>% dplyr::select(Site, SitePlot, SitePlotYear) %>% unique()
 
 timemap <- bats_22 %>% dplyr::select(night) %>% distinct(night, .keep_all = TRUE) # 140 nights of survey (before adding in zero nights)
 
 ### AGGREGATE TO N BAT PASSES PER MANUAL ID PER BEHAVIOR PER NIGHT
 # Number of bat passes per night for each manual ID AND behavior summed 
-bats2 <- bats_22 %>% group_by(SitePlotYear, night, manual.id, behavior1) %>% dplyr::summarize(batpass = sum(n()))
+bats2 <- bats_22 %>% dplyr::group_by(SitePlotYear, night, manual.id, behavior1) %>% dplyr::summarize(batpass = sum(n()))
 # 12973      obs of 5 vars
 head(bats2)
 
-bats3 <- left_join(bats2, batmap)
+bats3 <- dplyr::left_join(bats2, batmap)
 summary(bats3) # 12973      detector-manual.id-behavior nights  
 
 dat <- bats3 
-dim(dat) # 12973          9
+dim(dat) # 12973          7
 levels(dat$SitePlotYear)
 
 active.nights <- active.nights.22 %>% distinct() #4336 detector nights 
@@ -584,10 +591,10 @@ names(batsdf)
 
 # reconnect the metadata 
 names(bats1)
-batsx <- batsx %>% select(-behavior) %>%  rename(behavior = behavior1)
+batsx1 <- batsx %>% dplyr::select(-behavior) %>%  rename(behavior = behavior1)
 
-meta <- batsx %>% select(SitePlotYear, PlotType, Detector) %>% unique()
-meta1 <- batsx %>% select(manual.id, guild) %>% unique()
+meta <- batsx1 %>% dplyr::select(SitePlotYear, PlotType, Detector) %>% unique()
+meta1 <- batsx1 %>% dplyr::select(manual.id, guild) %>% unique()
 
 batsdf1 <- left_join(batsdf, meta)
 batsdf2 <- left_join(batsdf1, meta1)
@@ -597,7 +604,7 @@ dim(batsdf2)
 # 243510     10
 
 #write.csv(batsdf2, file = file.path(output_today, "FF_2021-2022_NightAggregated_AllSREmid_subsetnonSREmid_3behaviors.csv"))
-#  02.01.2024
+#  03.01.2024
 
 ## Now get the data that Katrine needs for the insect paper
 sre.ob <- batsdf2 %>% filter(PlotType == "Open" & guild == "SRE") %>% droplevels()

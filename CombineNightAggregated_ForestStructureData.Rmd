@@ -35,7 +35,7 @@ library(readr)
 ## Setup output directory 
 output <- "C:/Users/apmc/OneDrive - Norwegian University of Life Sciences/3. Follo Forest 2021-2023/Manuscripts/Analyses/Outputs"
 
-file.name <- "BatData_Aggregate_ZeroInsert"
+file.name <- "BatData_Aggregate_ForestVariables"
 
 todays_date <- Sys.Date()
  
@@ -50,27 +50,448 @@ output_today
 ## "C:/Users/apmc/OneDrive - Norwegian University of Life Sciences/3. Follo Forest 2021-2023/Manuscripts/Analyses/Outputs/BatData_Aggregate_ZeroInsert_2023-12-27"
 
 ## Nightly aggregated for all manual acoustic analysis 
-bats <- read_csv("C:/Users/apmc/OneDrive - Norwegian University of Life Sciences/3. Follo Forest 2021-2023/Manuscripts/Analyses/Inputs/FF_2021-2022_NightAggregated_SRE_OpenPlot_Only.csv", 
+bats <- read_csv("C:/Users/apmc/OneDrive - Norwegian University of Life Sciences/3. Follo Forest 2021-2023/Manuscripts/Analyses/Inputs/FF_2021-2022_NightAggregated_AllSREmid_subsetnonSREmid_3behaviors.csv", 
      col_types = cols(...1 = col_skip()))
 
+## Hemisphere data - both years, canopy openness only 
+# hemi <- read_csv("C:/Users/apmc/OneDrive - Norwegian University of Life Sciences/3. Follo Forest 2021-2023/Manuscripts/Analyses/Hemisphere Photos/HemipsherePhotos22_analysis/Outputs/DATE_output/Hemisphere_2021_2022_OB_CanOpen_Only.csv", 
+#      col_types = cols(...1 = col_skip()))
 
-sre.ob <- read_csv("C:/Users/apmc/OneDrive - Norwegian University of Life Sciences/3. Follo Forest 2021-2023/Manuscripts/Analyses/Inputs/FF_2021-2022_NightAggregated_AllSREmid_subsetnonSREmid.csv", 
-     col_types = cols(...1 = col_skip()))
-
-hem22 <- read_excel("C:/Users/apmc/OneDrive - Norwegian University of Life Sciences/3. Follo Forest 2021-2023/Manuscripts/Analyses/Hemisphere Photos/HemipsherePhotos22_analysis/Outputs/DATE_output/27.10.2022_HemiphotOutput.65_2022_final.xlsx")
-
-hem21 <- read_excel("C:/Users/apmc/OneDrive - Norwegian University of Life Sciences/3. Follo Forest 2021-2023/Manuscripts/Analyses/Hemisphere Photos/HemipsherePhotos22_analysis/Outputs/DATE_output/27.10.2022_HemiphotOutput.65_2021_final.xlsx")
-
+# 2021 forest inventory data 
 forestplots21 <- read_delim("C:/Users/apmc/OneDrive - Norwegian University of Life Sciences/3. Follo Forest 2021-2023/Manuscripts/Analyses/ForesetInventoryData/2021/forestplots1.csv",     delim = ";", escape_double = FALSE, trim_ws = TRUE)
 
 BasalArea21 <- read_delim("C:/Users/apmc/OneDrive - Norwegian University of Life Sciences/3. Follo Forest 2021-2023/Manuscripts/Analyses/ForesetInventoryData/2021/Basal area summary 2021 (1).csv", 
      delim = ";", escape_double = FALSE, trim_ws = TRUE)
 
+# 2022 forest inventory data
 forestplots22 <- read_excel("C:/Users/apmc/OneDrive - Norwegian University of Life Sciences/3. Follo Forest 2021-2023/Manuscripts/Analyses/ForesetInventoryData/2022/ForestPlots_2022_edited.xlsx")
 
 BasalArea22 <- read_excel("C:/Users/apmc/OneDrive - Norwegian University of Life Sciences/3. Follo Forest 2021-2023/Manuscripts/Analyses/ForesetInventoryData/2022/BasalArea_2022.xlsx")
 
+```
 
+# Combine and clean forest inventory data
+```{r}
+################## 2021 data ##########################
+names(forestplots21)
+# [1] "Site"             "DetectorType"     "SitePlot"         "VegType"         
+#  [5] "GroundCover"      "GroundCoverRank"  "RelascopeSumAvg"  "PlotSize.m2"     
+#  [9] "CountSmallTrees"  "CountBushes"      "CountLivingTrees" "CountDeadTrees"  
+# [13] "CountSnags"       "SumTrees" 
+
+names(BasalArea21)
+#  [1] "Site"                  "DetectorType"          "DetectorID"           
+#  [4] "SitePlot"              "PlotRadius.m"          "PlotSize.m2"          
+#  [7] "basal.m2"              "basal.m2.per.plotsize" "TreeNo"               
+# [10] "Species"               "DBHavg"                "State"    
+
+View(BasalArea21)
+
+## forest plots data 
+
+cols <- c("Site", "DetectorType", "SitePlot", "VegType", "GroundCover")
+forestplots21[cols] <- lapply(forestplots21[cols], factor)
+summary(forestplots21)
+
+## Basal area data 
+BA <- BasalArea21
+BA1 <- BA %>% rename(plotsize = PlotSize.m2, BA_plot = basal.m2,  BA_100 = basal.m2.per.plotsize)
+BA1 <- BA1 %>% unite(TreeID, c("SitePlot", "TreeNo"), remove = FALSE) 
+
+
+#format the columns 
+cols <- c("Site", "DetectorType", "DetectorID", "SitePlot", "State", "Species")
+BA1[cols] <- lapply(BA1[cols], factor)
+summary(BA1)
+BA1. <- na.omit(BA1) #no NAs
+# 682 obs
+
+BA1$BA_plot <- gsub(",", ".", BA1$BA_plot)
+BA1$BA_plot <- as.numeric(BA1$BA_plot)
+BA1$BA_100 <- gsub(",", ".", BA1$BA_100)
+BA1$BA_100 <- as.numeric(BA1$BA_100)
+BA1$PlotRadius.m <- gsub(",", ".", BA1$PlotRadius.m)
+BA1$PlotRadius.m <- as.numeric(BA1$PlotRadius.m)
+BA1$DBHavg <- gsub(",", ".", BA1$DBHavg)
+BA1$DBHavg <- as.numeric(BA1$DBHavg)
+
+summary(BA1)
+head(BA1)
+names(BA1)
+
+# Aggregate down to sum basal areas per site plot
+#BA1$SitePlot = factor(BA1$SitePlot)
+BA2 <- BA1 %>% dplyr::group_by(SitePlot) %>% dplyr::summarize(BA_plot = sum(BA_plot), BA_100 = sum(BA_100)) 
+summary(BA2)
+
+## FF5-OB had no trees in it so I need to manually insert a BA of zero for that site
+names(BA2)
+# "SitePlot" "BA_plot"  "BA_100" 
+ff5ob <- data.frame("FF5-OB", 0, 0) 
+names(ff5ob) <- c("SitePlot", "BA_plot" , "BA_100")
+head(ff5ob)
+ff5ob$SitePlot <- as.factor(ff5ob$SitePlot)
+BA3 <- rbind(BA2, ff5ob)
+summary(BA3)
+head(BA3)
+
+#write.csv(BA3, file = file.path(output_today,"BasalArea_averaged_FF5OBadded_2021.csv"))
+
+# Check that the levels match 
+levels(BA3$SitePlot)
+levels(forestplots21$SitePlot)
+
+forest21<- dplyr::left_join(forestplots21, BA3)
+summary(forest21)
+
+#write.csv(forest21, file = file.path(output_today, "summary forest structure 2021.csv"))
+
+## Now drop variables we will not use moving forward and rename others so they match with both years
+
+forest21$SitePlot <- gsub("FF1-", "FF01-", forest21$SitePlot)
+forest21$SitePlot <- gsub("FF2-", "FF02-", forest21$SitePlot)
+forest21$SitePlot <- gsub("FF3-", "FF03-", forest21$SitePlot)
+forest21$SitePlot <- gsub("FF4-", "FF04-", forest21$SitePlot)
+forest21$SitePlot <- gsub("FF5-", "FF05-", forest21$SitePlot)
+forest21$SitePlot <- gsub("FF6-", "FF06-", forest21$SitePlot)
+forest21$SitePlot <- gsub("FF7-", "FF07-", forest21$SitePlot)
+forest21$SitePlot <- gsub("FF8-", "FF08-", forest21$SitePlot)
+forest21$SitePlot <- gsub("FF9-", "FF09-", forest21$SitePlot)
+
+forest21$SitePlot <- factor(forest21$SitePlot)
+levels(forest21$SitePlot)
+
+forest21x <- forest21  %>%  dplyr::select(c(SitePlot, 
+                                          VegType, GroundCover, 
+                                          CountSmallTrees, CountBushes,
+                                          CountDeadTrees, CountLivingTrees, 
+                                          CountSnags, SumTrees,
+                                          RelascopeSumAvg, PlotSize.m2,
+                                          BA_plot, BA_100)) %>% 
+  rename(VegCover = GroundCover) %>% mutate(year = "2021") %>% 
+  mutate(SitePlotYear = factor(paste0(SitePlot, "-", year))) 
+
+summary(forest21x) 
+
+#######################################################
+################## 2022 data ##########################
+#######################################################
+names(forestplots22)
+# [1] "Site"             "DetectorType"     "SitePlot"         "VegType"         
+#  [5] "GroundCover"      "GroundCoverRank"  "RelascopeSumAvg"  "PlotSize.m2"     
+#  [9] "CountSmallTrees"  "CountBushes"      "CountLivingTrees" "CountDeadTrees"  
+# [13] "CountSnags"       "SumTrees" 
+# 
+# [1] "Site"            "DetectorID"      "Date"            "VegType"         "VegCover"       
+# [6] "RelascopeSum1"   "RelascopeSum2"   "CountSmallTrees" "CountBushes"
+
+
+names(BasalArea22)
+#  [1] "Site"                  "DetectorType"          "DetectorID"           
+#  [4] "SitePlot"              "PlotRadius.m"          "PlotSize.m2"          
+#  [7] "basal.m2"              "basal.m2.per.plotsize" "TreeNo"               
+# [10] "Species"               "DBHavg"                "State"    
+
+### 
+## Missing columns: 
+# RelascopeSumAvg, CountLivingTrees, CountDeadTrees, CountSnags, SumTrees trees
+# The tree columns can be counted from the BA object
+
+BasalArea22$SitePlot <- factor(paste0(BasalArea22$Site, "-", BasalArea22$DetectorID))
+BasalArea22$TreeState <- BasalArea22$`State (Living/Dead/Snag)`
+
+trees <- BasalArea22 %>% 
+  dplyr::group_by(SitePlot) %>% 
+  dplyr::summarize(
+    CountLivingTrees = sum (TreeState == "L"),
+    CountDeadTrees = sum (TreeState == "D"), 
+    CountSnags = sum(TreeState == "S"),
+    SumTrees = CountDeadTrees + CountLivingTrees + CountSnags) 
+
+## Merge the trees object with the FF object 
+### First need to fix the SitePlot column so they can match with trees 
+f22 <- forestplots22 %>% 
+  mutate(SitePlot = paste0(Site, "-", DetectorID)) 
+
+f22$SitePlot <- gsub("FF1-", "FF01-", f22$SitePlot)
+f22$SitePlot <- gsub("FF2-", "FF02-", f22$SitePlot)
+f22$SitePlot <- gsub("FF3-", "FF03-", f22$SitePlot)
+f22$SitePlot <- gsub("FF4-", "FF04-", f22$SitePlot)
+f22$SitePlot <- gsub("FF5-", "FF05-", f22$SitePlot)
+f22$SitePlot <- gsub("FF6-", "FF06-", f22$SitePlot)
+f22$SitePlot <- gsub("FF7-", "FF07-", f22$SitePlot)
+f22$SitePlot <- gsub("FF8-", "FF08-", f22$SitePlot)
+f22$SitePlot <- gsub("FF9-", "FF09-", f22$SitePlot)
+
+f22$SitePlot <- factor(f22$SitePlot)
+levels(f22$SitePlot)
+## forest plots data
+
+forests22 <- left_join(f22, trees)
+
+
+# Calculate RelascopeAverage for each site
+relas <- forests22 %>% 
+  dplyr::group_by(SitePlot) %>% 
+  dplyr::summarize(RelascopeSumAvg = (RelascopeSum1 + RelascopeSum2)/2) 
+
+forests22. <- left_join(forests22, relas) %>% dplyr::select(-c(RelascopeSum1, RelascopeSum2, Date, Site, DetectorID))
+
+
+## Basal area data 
+BA <- BasalArea22
+BA1 <- BA %>% rename(BA_plot = basal.m2,  BA_100 = basal.m2.per.plotsize)
+BA1 <- BA1 %>% unite(TreeID, c("SitePlot", "Tree(stem)No"), remove = FALSE) %>% 
+  dplyr::select(-c(Notes, 'State (Living/Dead/Snag)')) 
+
+
+#format the columns 
+cols <- c("Site", "DetectorID", "SitePlot", "TreeState", "Species")
+BA1[cols] <- lapply(BA1[cols], factor)
+
+summary(BA1)
+BA1. <- na.omit(BA1) #no NAs
+# 464 obs
+
+# BA1$BA_plot <- gsub(",", ".", BA1$BA_plot)
+# BA1$BA_plot <- as.numeric(BA1$BA_plot)
+# BA1$BA_100 <- gsub(",", ".", BA1$BA_100)
+# BA1$BA_100 <- as.numeric(BA1$BA_100)
+# BA1$PlotRadius.m <- gsub(",", ".", BA1$PlotRadius.m)
+# BA1$PlotRadius.m <- as.numeric(BA1$PlotRadius.m)
+# BA1$DBHavg <- gsub(",", ".", BA1$DBHavg)
+# BA1$DBHavg <- as.numeric(BA1$DBHavg)
+
+summary(BA1)
+head(BA1)
+names(BA1)
+
+# Aggregate down to sum basal areas per site plot
+#BA1$SitePlot = factor(BA1$SitePlot)
+BA2 <- BA1 %>% dplyr::group_by(SitePlot) %>% dplyr::summarize(BA_plot = sum(BA_plot), BA_100 = sum(BA_100)) 
+summary(BA2)
+
+BAx <- BA1 %>% dplyr::select(SitePlot, PlotSize.m2)
+
+BA3 <- left_join(BA2, BAx) %>% unique()
+
+#write.csv(BA2, file = file.path(output_today,"BasalArea_averaged_2022.csv"))
+
+forest22<- left_join(forests22., BA3)
+summary(forest22)
+
+forest22x <- forest22 %>% dplyr::select(c(SitePlot, 
+                                          VegType, VegCover, 
+                                          CountSmallTrees, CountBushes,
+                                          CountDeadTrees, CountLivingTrees, 
+                                          CountSnags, SumTrees,
+                                          RelascopeSumAvg, PlotSize.m2,
+                                          BA_plot, BA_100)) %>% 
+                                  mutate( year = "2022") %>% 
+                                  mutate(
+                                    SitePlotYear = factor(paste0(SitePlot, "-", year)))
+
+# write.csv(forest22, file = file.path(output_today, "summary forest structure 2022.csv"))
+
+
+################## Combine years ##########################
+forests <- full_join(forest21x, forest22x) # typo for FF02-CB-2021 plot m2 
+forests$PlotSize.m2 <- gsub("283", "28.3", forests$PlotSize.m2 )
+
+#write.csv(forests, file = file.path(output_today, "summary forest structure 2022 and 2021.csv"))
 
 ```
 
+
+# Create photoperiod dataset 
+https://nubededatos.blogspot.com/2019/02/calculate-and-plot-sunrise-and-sunset.html
+```{r}
+library(suncalc)
+library(scales)
+## Calculate photoperiod for each day in the study period
+# Use FF8-OB location as a proxy for all sites 10.760005	59.758102
+summary(bats$night)
+date1 <-  as.data.frame(seq.Date(as.Date("2021-05-14"), as.Date("2021-09-14"), by=1)) 
+names(date1) <- "date"
+date2 <- as.data.frame(seq.Date(as.Date("2022-05-04"), as.Date("2022-09-21"), by=1))
+names(date2) <- "date"
+
+dates <- merge(date1, date2, all.x = TRUE, all.y = TRUE) 
+dates.list <- dates$date
+
+photoperiod <- getSunlightTimes(
+  date = dates.list, 
+  keep = c("sunrise", "sunriseEnd", "sunset", "sunsetStart"),
+  lat = 59.758102,
+  lon = 10.760005, 
+  tz = "CET")
+
+##### Sunrise/set ##### 
+p21 <- photoperiod %>%
+  mutate(
+    date = as.POSIXct(date) ,
+    sunrise = sunrise - date,
+    sunset =  sunset - date,
+    year = year(date)
+  ) %>% filter(year == "2021") %>% 
+  ggplot() +
+  geom_ribbon(aes(x = date, ymin = sunrise, ymax = sunset),
+              fill = "#FDE725FF",
+              alpha = .8) + # "#ffeda0"
+  scale_x_datetime(
+    breaks = seq(as.POSIXct(min(photoperiod$date)), as.POSIXct(max(photoperiod$date)), "week"),
+    expand = c(0, 0),
+    labels = date_format("%b %y"),
+    minor_breaks = NULL
+  ) +
+  scale_y_continuous(
+    limits = c(0, 24),
+    breaks = seq(0, 24, 2),
+    expand = c(0, 0),
+    minor_breaks = NULL
+  ) +
+  labs(
+    x = "Date",
+    y = "Hours",
+    title = "2021"
+  ) +
+  theme(
+    panel.background = element_rect(fill = "#180F3EFF"),
+    panel.grid = element_line(colour = "grey", linetype = "dashed")
+  ) 
+p21
+
+p22 <- photoperiod %>%
+  mutate(
+    date = as.POSIXct(date) ,
+    sunrise = sunrise - date,
+    sunset =  sunset - date,
+    year = year(date)
+  ) %>% filter(year == "2022") %>% 
+  ggplot() +
+  geom_ribbon(aes(x = date, ymin = sunrise, ymax = sunset),
+              fill = "#FDE725FF",
+              alpha = .8) + # "#ffeda0"
+  scale_x_datetime(
+    breaks = seq(as.POSIXct(min(photoperiod$date)), as.POSIXct(max(photoperiod$date)), "week"),
+    expand = c(0, 0),
+    labels = date_format("%b %y"),
+    minor_breaks = NULL
+  ) +
+  scale_y_continuous(
+    limits = c(0, 24),
+    breaks = seq(0, 24, 2),
+    expand = c(0, 0),
+    minor_breaks = NULL
+  ) +
+  labs(
+    x = "Date",
+    y = "Hours",
+    title = "2022"
+  ) +
+  theme(
+    panel.background = element_rect(fill = "#180F3EFF"),
+    panel.grid = element_line(colour = "grey", linetype = "dashed")
+  ) 
+p22
+
+cowplot::plot_grid(p21, p22, nrow = 2)
+
+
+
+#### Day length #### 
+photoperiod1 <- photoperiod %>%
+  mutate(
+    date = as.POSIXct(date),
+    day_length = as.numeric(sunset - sunrise),
+    night = date, 
+    jnight = yday(night)) 
+
+head(photoperiod1)
+
+write.csv(photoperiod1, file = file.path(output_today, "daylength_sunrise_sunset_surveyperiod_2021_2022.csv")) 
+
+```
+
+
+
+# Combine photoperiod and forest data with bat dataset 
+```{r}
+names(bats)
+ # [1] "SitePlotYear" "night"        "manual.id"    "behavior"     "batpass"      "Site"        
+ # [7] "SitePlot"     "PlotType"     "Detector"     "guild"  
+
+names(forests)
+#  [1] "SitePlot"         "VegType"          "VegCover"         "CountSmallTrees" 
+#  [5] "CountBushes"      "CountDeadTrees"   "CountLivingTrees" "CountSnags"      
+#  [9] "SumTrees"         "RelascopeSumAvg"  "PlotSize.m2"      "BA_plot"         
+# [13] "BA_100"           "year"             "SitePlotYear"
+
+forests1 <- forests %>% dplyr::select(-c(SitePlot, year)) 
+
+names(photoperiod1) 
+ # [1] "date"        "lat"         "lon"         "sunrise"     "sunriseEnd"  "sunset"     
+ # [7] "sunsetStart" "day_length"  "night"       "jnight" 
+photo1 <- photoperiod1 %>% dplyr::select(c(night, sunrise, sunset, day_length)) 
+
+
+bats1 <- left_join(bats, forests1)
+bats2 <- left_join(bats1, photo1)
+
+summary(bats2)
+
+write.csv(bats2, file = file.path(output_today, "allbats.subset_aggnight_21_22_photoperiod_forestinvent.csv"))
+
+```
+
+
+
+## Examples from a previous script: 
+## Combine daylength data with master dataset
+```{r}
+# bats9 <- bats7 %>% rename(date=Rdate)
+# bats9 <- bats9 %>% mutate(date = as.POSIXct(date))
+# bats10 <- full_join(bats9, photoperiod1, by = "date") # Works!! 
+# # 209663 obs of 33 variables 
+# # 11 NAs introduced - remove those 
+# bats10 <- bats10[!is.na(bats10$guild),]
+# #209652 obs of 33 variables
+# 
+# # write.csv(bats10, "bats10_bats7_wdaylength_sunrise_sunset.csv")
+# ## plot using two different datasets instead - didn't work great either
+# 
+# # Plot bat activity for different guilds with day length on the x axis 
+# 
+# dl <- bats10 %>% ggplot(aes(x= day_length, color = guild)) +
+#   geom_point(stat = "count") + facet_wrap( ~Plot) + coord_flip()
+# 
+# dl
+# 
+# dlx <- bats10 %>% ggplot(aes(x= day_length, color = guild)) +
+#   geom_point(stat = "count") + facet_wrap( ~Plot) + coord_flip() + ylim(c(0, 800))
+# dlx
+# # 15 points removed 
+# 
+# dly <- bats10 %>% ggplot(aes(x= day_length, color = guild)) +
+#   geom_point(stat = "count") + facet_wrap( ~Plot) + coord_flip() + ylim(c(0, 500))
+# dly
+# 
+# CBdl <- bats10 %>% filter(Plot=="CB") %>% ggplot(aes(x= day_length, color = guild)) +
+#   geom_point(stat = "count") + facet_wrap( ~guild) + coord_flip() + ylim(c(0, 800)) + ggtitle("Canopy Detecors")
+# 
+# CBdl
+# 
+# OBdl <- bats10 %>% filter(Plot=="OB") %>% ggplot(aes(x= day_length, color = guild)) +
+#   geom_point(stat = "count") + facet_wrap( ~guild) + coord_flip() + ylim(c(0, 800)) + ggtitle("Open Ground Level Detecors")
+# 
+# OBdl
+# 
+# IBdl <- bats10 %>% filter(Plot=="IB") %>% ggplot(aes(x= day_length, color = guild)) +
+#   geom_point(stat = "count") + facet_wrap( ~guild) + coord_flip() + ylim(c(0, 400)) + ggtitle("Interior Ground Level Detecors - y limit at 400 observations")
+# 
+# IBdl 
+# 
+# 
+# # When does the majority of bat activity occur? relative to photo period? to guild? 
+## to be continued.... 
+```

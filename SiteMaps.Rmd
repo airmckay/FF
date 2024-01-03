@@ -1,0 +1,237 @@
+---
+title: "SiteMaps"
+output: html_document
+date: "2024-01-03"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+# Goals 
+- Site map for FF density paper
+- Site map for insect paper
+
+```{r}
+library(tidyverse)
+library(dplyr)
+library(raster)
+library(rgdal)
+library(rgeos)
+library(mapview)
+library(sf)
+library(sp)
+library(maps)
+library(leaflet)
+library(randomcoloR)
+library(wesanderson)
+library(leaflegend)
+library(osmdata)
+
+library(ggmap)
+library(maptools)
+
+```
+
+
+```{r}
+
+tpt<- st_read("C:/Users/apmc/OneDrive - Norwegian University of Life Sciences/3. Follo Forest 2021-2023/2021/Map Resources/OB.kml")
+
+st_crs(tpt)
+
+plot(tpt[1])
+
+tpt$Name = as.factor(tpt$Name)
+
+levels(tpt$Name)
+ # "FF1 OB"  "FF10 OB" "FF11 OB" "FF12 OB" "FF2 OB"  "FF3-OB"  "FF4-OB"  "FF5-OB"  "FF6 OB"  "FF7 OB" 
+ # "FF8 OB"  "FF9 OB" 
+
+tpt$Name <- gsub(" OB", "", tpt$Name)
+tpt$Name <- gsub("-OB", "", tpt$Name)
+tpt$Name <- as.factor(tpt$Name)
+
+levels(tpt$Name)
+# "FF1"  "FF10" "FF11" "FF12" "FF2"  "FF3"  "FF4"  "FF5"  "FF6"  "FF7"  "FF8"  "FF9" 
+
+tpt1 <- tpt %>% mutate(Monitoring = case_when(
+   Name %in% c("FF12") ~ "2021",
+   Name %in% c("FF1",  "FF10", "FF11", 
+               "FF2",  "FF3",  "FF4",  
+               "FF5",  "FF6",  "FF7",  
+               "FF8",  "FF9" ) ~ "both")) %>% 
+  dplyr::select(-Description) 
+
+tpt1$Monitoring = as.factor(tpt1$Monitoring)
+
+str(tpt1)
+
+################## Map options ##########################
+
+
+#### Gray Black Light Topo and reverse 
+factpal <- colorFactor( palette = c("#606c79", "black"),
+           domain = c("both", "2021"))
+#windows()
+leaflet(tpt1) %>% 
+  addProviderTiles(providers$Esri.WorldTopoMap) %>% 
+  addCircleMarkers(radius = 7, color =  ~factpal(Monitoring),
+                       fillOpacity = 1,  stroke = TRUE) %>% 
+  addMiniMap(
+    position = "bottomright",
+    zoomLevelOffset = -7, width = 300, height = 300,
+    collapsedWidth = 19, collapsedHeight = 19) %>%
+  addScaleBar(position = "bottomright")
+
+## Reverse
+
+factpal <- colorFactor( palette = c("black", "#606c79"),
+           domain = c("both", "2021"))
+#windows()
+leaflet(tpt1) %>% 
+  addProviderTiles(providers$Esri.WorldTopoMap) %>% 
+  addCircleMarkers(radius = 7, color =  ~factpal(Monitoring),
+                       fillOpacity = 1,  stroke = TRUE) %>% 
+  addMiniMap(
+    position = "bottomright",
+    zoomLevelOffset = -7, width = 300, height = 300,
+    collapsedWidth = 19, collapsedHeight = 19) %>%
+  addScaleBar(position = "bottomright")
+
+
+#### Gray Black - gray topo 
+factpal <- colorFactor( palette = c("#606c79", "black"),
+           domain = c("both", "2021"))
+#windows()
+leaflet(tpt1) %>% 
+  addProviderTiles(providers$CartoDB.PositronNoLabels) %>% 
+  addCircleMarkers(radius = 7, color =  ~factpal(Monitoring),
+                       fillOpacity = 1,  stroke = TRUE) %>% 
+  addMiniMap(
+    position = "bottomright",
+    zoomLevelOffset = -7, width = 300, height = 300,
+    collapsedWidth = 19, collapsedHeight = 19) %>%
+  addScaleBar(position = "bottomright")
+
+## Reverse
+# GrayBlack_NoLabelsLight
+factpal <- colorFactor( palette = c("black", "#606c79"),
+           domain = c("both", "2021"))
+#windows()
+leaflet(tpt1) %>% 
+  addProviderTiles(providers$CartoDB.PositronNoLabels) %>% 
+  addCircleMarkers(radius = 7, color =  ~factpal(Monitoring),
+                       fillOpacity = 1,  stroke = TRUE) %>% 
+  addMiniMap(
+    position = "bottomright",
+    zoomLevelOffset = -7, width = 300, height = 300,
+    collapsedWidth = 19, collapsedHeight = 19) %>%
+  addScaleBar(position = "bottomright")
+
+
+#### Gray Black - Stadia.OSMBright
+factpal <- colorFactor( palette = c("#606c79", "black"),
+           domain = c("both", "2021"))
+#windows()
+leaflet(tpt1) %>% 
+  addProviderTiles(providers$Stadia.OSMBright) %>% 
+  addCircleMarkers(radius = 7, color =  ~factpal(Monitoring),
+                       fillOpacity = 1,  stroke = TRUE) %>% 
+  addMiniMap(
+    position = "bottomright",
+    zoomLevelOffset = -7, width = 300, height = 300,
+    collapsedWidth = 19, collapsedHeight = 19) %>%
+  addScaleBar(position = "bottomright")
+
+## Reverse
+# GrayBlack_NoLabelsLight
+factpal <- colorFactor( palette = c("black", "#606c79"),
+           domain = c("both", "2021"))
+#windows()
+leaflet(tpt1) %>% 
+  addProviderTiles(providers$Stadia.OSMBright) %>% 
+  addCircleMarkers(radius = 7, color =  ~factpal(Monitoring),
+                       fillOpacity = 1,  stroke = TRUE) %>% 
+  addMiniMap(
+    position = "bottomright",
+    zoomLevelOffset = -7, width = 300, height = 300,
+    collapsedWidth = 19, collapsedHeight = 19) %>%
+  addScaleBar(position = "bottomright")
+
+## Reverse
+# browns_Stadia.OSMBright
+factpal <- colorFactor( palette = c("#5a2f03", "#b45f06"),
+           domain = c("both", "2021"))
+#windows()
+leaflet(tpt1) %>% 
+  addProviderTiles(providers$Stadia.OSMBright) %>% 
+  addCircleMarkers(radius = 7, color =  ~factpal(Monitoring),
+                       fillOpacity = 1,  stroke = TRUE) %>% 
+  addMiniMap(
+    position = "bottomright",
+    zoomLevelOffset = -7, width = 300, height = 300,
+    collapsedWidth = 19, collapsedHeight = 19) %>%
+  addScaleBar(position = "bottomright")
+
+# blues_Stadia.OSMBright
+factpal <- colorFactor( palette = c("#065bb4", "#022448"),
+           domain = c("both", "2021"))
+#windows()
+leaflet(tpt1) %>% 
+  addProviderTiles(providers$Stadia.OSMBright) %>% 
+  addCircleMarkers(radius = 7, color =  ~factpal(Monitoring),
+                       fillOpacity = 1,  stroke = TRUE) %>% 
+  addMiniMap(
+    position = "bottomright",
+    zoomLevelOffset = -7, width = 300, height = 300,
+    collapsedWidth = 19, collapsedHeight = 19) %>%
+  addScaleBar(position = "bottomright")
+
+
+#### For the denisty paper
+
+
+#### For the denisty paper 
+factpal <- colorFactor( palette = c("#022448","#065bb4"),
+           domain = c("both", "2021"))
+#windows()
+leaflet(tpt1) %>% 
+  addProviderTiles(providers$CartoDB.VoyagerNoLabels) %>% 
+  addCircleMarkers(radius = 7, color =  ~factpal(Monitoring),
+                       fillOpacity = 1,  stroke = TRUE) %>% 
+  addMiniMap(
+    position = "bottomright",
+    tiles = "Stadia.AlidadeSmooth",
+    zoomLevelOffset = -6, width = 300, height = 300,
+    collapsedWidth = 19, collapsedHeight = 19) %>%
+  addScaleBar(position = "bottomright")
+
+
+factpal <- colorFactor( palette = c("#e68d8d","#615151"),
+           domain = c("both", "2021"))
+#windows()
+leaflet(tpt1) %>% 
+  addProviderTiles(providers$CartoDB.VoyagerNoLabels) %>% 
+  addCircleMarkers(radius = 7, color =  ~factpal(Monitoring),
+                       fillOpacity = 1,  stroke = TRUE) %>% 
+  addMiniMap(
+    position = "bottomright",
+    tiles = "CartoDB.VoyagerNoLabels",
+    zoomLevelOffset = -7.8, width = 300, height = 300,
+    collapsedWidth = 100, collapsedHeight = 100) %>%
+  addScaleBar(position = "bottomright")
+
+
+```
+
+
+```{r}
+#spdf <- st_transform(tpt1, proj4string = "+proj=utm +zone=%d +ellps=WGS84 +datum=WGS84 +units=m +no_defs")
+summary(tpt1)
+g <- st_as_sf(tpt1, coords = c("x", "y"), crs = 25833)
+mapview(g)
+
+```
+
