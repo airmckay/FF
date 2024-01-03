@@ -6,7 +6,6 @@ date: "2023-12-27"
 
 
 ```{r}
-
 library(data.table)
 library(tidyverse)
 library(beepr)
@@ -110,7 +109,7 @@ active.nights.22 <- active.nights %>% filter(year == "2022") %>% droplevels()
 bats_21 <- bats1 %>% filter(year == "2021") %>% droplevels()
 #48866 bat passes 
 
-batmap <- bats_21 %>% select(Site, SitePlot, SitePlotYear) %>% unique()
+batmap <- bats_21 %>% dplyr::select(Site, SitePlot, SitePlotYear) %>% unique()
 
 timemap <- bats_21 %>% dplyr::select(night) %>% distinct(night, .keep_all = TRUE) # 121 nights of survey (before adding in zero nights)
 
@@ -337,24 +336,7 @@ summary(batsdf2)
 #write.csv(batsdf2, file = file.path(output_today, "FF_2021-2022_NightAggregated_AllSREmid_subsetnonSREmid.csv"))
 # 28.12.2023
 
-## Now get the data that Katrine needs for the insect paper
 
-sre.ob <- batsdf2 %>% filter(PlotType == "Open" & guild == "SRE") %>% droplevels()
-sre.ob$year <- year(sre.ob$night)
-sre.ob$jnight <- yday(sre.ob$night)
-# 21512 obs of 10 vars 
-#write.csv(sre.ob, file = file.path(output_today, "FF_2021-2022_NightAggregated_SRE_OpenPlot_Only.csv"))
-#28.12.2023
-
-## Visually check the SRE OB dataset before sending 
-ggplot(sre.ob) + 
-  geom_count(aes(x = jnight, y = behavior, color = behavior, size = batpass)) +   facet_wrap(Site~year)
-
-ggplot(sre.ob %>% filter(batpass >0)) + 
-  geom_count(aes(x = jnight, y = behavior, color = behavior, size = batpass)) +   facet_wrap(Site~year)
-
-
-summary(sre.ob)
 
 ```
 
